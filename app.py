@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 
-from auth.jwt_bearer import JWTBearer
-from config.config import initiate_database
+from api.auth.jwt_bearer import JWTBearer
+from api.config.config import initiate_database
 
 app = FastAPI()
 
