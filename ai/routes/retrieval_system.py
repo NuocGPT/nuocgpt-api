@@ -8,12 +8,12 @@ import os
 
 from schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest
 from core.data_ingestor import DataIngestor
+from core.constants import IngestDataConstants
 
-UPLOAD_FOLDER = Settings().upload_folder
 OPENAI_API_KEY = Settings().openai_api_key
 
-MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
-ALLOWED_EXTENSIONS = ["pdf", "json"]
+MAX_FILE_SIZE = IngestDataConstants.MAX_FILE_SIZE
+ALLOWED_EXTENSIONS = IngestDataConstants.ALLOWED_EXTENSIONS
 
 router = APIRouter()
 
@@ -41,8 +41,7 @@ async def import_file(request: ImportFileRequest = Depends()):
     }
 
     try:
-        vectorstore_path = data_ingestor.create_vectorstore()
-        file_path = os.path.join(vectorstore_path, "content." + file_extension)
+        file_path = os.path.join(IngestDataConstants.TEMP_UPLOADED_FOLDER, "temp." + file_extension)
 
         with open(file_path, "wb", encoding='utf-8') as f:
             contents = await file.read()

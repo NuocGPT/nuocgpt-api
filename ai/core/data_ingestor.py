@@ -14,6 +14,7 @@ from langchain.vectorstores import Chroma
 from llama_index import download_loader
 
 from core.constants import IngestDataConstants
+from core.aws_service import AWSService
 
 @backoff.on_exception(backoff.expo, openai.error.RateLimitError)
 def openai_embedding_with_backoff():
@@ -23,14 +24,15 @@ class DataIngestor:
     """Ingest data with different format to create vectorstore"""
     def __init__(self, lang: str = ""):
         self.lang = lang
-        self.vectorstore_folder_path = f"vectorstores/{self.lang}"
 
     def create_vectorstore(self) -> Text:
         vectorstore_path = ""
         try:
-            vectorstore_path = os.path.join(IngestDataConstants.ROOT_PATH, f"{self.vectorstore_folder_path}/")
+            vectorstore_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
             if not os.path.exists(vectorstore_path):
                 os.makedirs(vectorstore_path)
+            s3_client = AWSService()
+            s3_client.download_from_s3(vectorstore_path)
         except Exception as e:
             logging.exception(e)
         finally:
@@ -49,6 +51,9 @@ class DataIngestor:
         vectorstore = Chroma(persist_directory=vectorstore_path, embedding_function=embeddings)
         vectorstore.add_documents(splitted_documents)
         vectorstore.persist()
+
+        s3_client = AWSService()
+        s3_client.upload_to_s3(vectorstore_path)
         
     def ingest_pdf(self, pdf_path: Text):
         vectorstore_path = self.create_vectorstore()

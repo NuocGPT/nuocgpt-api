@@ -12,7 +12,7 @@ from langchain import LLMChain
 
 from llm.data_loader.load_langchain_config import LangChainDataLoader
 from core.constants import LangChainOpenAIConstants, IngestDataConstants
-
+from core.aws_service import AWSService
 
 class LangchainOpenAI:
     """Langchain OpenAI"""
@@ -24,14 +24,16 @@ class LangchainOpenAI:
         self.output_parser = None
         self.is_chat_model, self.llm_cls, self.llm_model = self.load_llm_model()
         self.data_loader = LangChainDataLoader()
-        lang = self._detect_language(question)
+        self.lang = self._detect_language(question)
 
         self.data_loader.preprocessing_qa_prompt(
             metadata=self._format_dict_list(metadata or []),
         )
         
-        vectorstore_folder_path = f"vectorstores/{lang}"
-        self.vectorstore = os.path.join(IngestDataConstants.ROOT_PATH, f"{vectorstore_folder_path}/")
+        self.vectorstore = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
+        s3_client = AWSService()
+        s3_client.download_from_s3(self.vectorstore)
+
 
     def get_chain(self) -> ConversationalRetrievalChain:
         prompt_title = "qaPrompt"
