@@ -1,20 +1,34 @@
-version: "3"
+version: "3.7"
 
 services:
   app:
     build: .
     ports:
-      - "8080:8080"
-    env_file:
-      - .env.docker-compose
+      - 8080:8080
+    environment:
+      DATABASE_URL: mongodb://mongodb:27017/nuocgpt
+      secret_key: guiyfgc837tgf3iw87-012389764
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/app
+    networks:
+      - node-network
 
   mongodb:
-    image: bitnami/mongodb:latest
+    image: mongo:4.0.8
+    restart: unless-stopped
     ports:
-      - "27017"
+     - 27017:27017
     volumes:
-      - data:/bitnami/mongodb
-
+      - mongodbdata:/data/db
+    networks:
+      - node-network
 
 volumes:
-  data:
+  mongodbdata:
+    driver: local
+
+networks:
+  node-network:
+    driver: bridge
