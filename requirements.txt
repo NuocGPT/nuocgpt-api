@@ -13,3 +13,4 @@ httpx # 0.24.0
 mongomock_motor # 0.0.19
 pytest-mock # 3.10.0
 pydantic-settings # 2.0.3
+fastapi-paginate # 0.1.0

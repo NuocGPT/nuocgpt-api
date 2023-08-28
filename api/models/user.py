@@ -1,53 +1,22 @@
-from typing import Optional, Any
-
+from uuid import UUID, uuid4
 from beanie import Document
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr, Field, ConfigDict
 
 
 class User(Document):
+    id: UUID = Field(default_factory=uuid4)
     email: EmailStr
     password: str
 
     class Config:
+        arbitrary_types_allowed = True
         json_schema_extra = {
             "example": {
+                "id": "aaa23890-6d64-46e3-a60c-00f08c5fd51e",
                 "email": "sample@nuocgpt.com",
                 "password": "$2y$10$qVG8JaWgzo75ZPU1EpB6Xu.cbwvds5g/VlyZypU1kQruw7bIR0Vfy",
             }
         }
 
     class Settings:
-        name = "user"
-
-
-class UpdateUserModel(BaseModel):
-    email: Optional[EmailStr]
-    password: Optional[str]
-
-    class Collection:
-        name = "user"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "sample@nuocgpt.com",
-                "password": "$2y$10$qVG8JaWgzo75ZPU1EpB6Xu.cbwvds5g/VlyZypU1kQruw7bIR0Vfy",
-            }
-        }
-
-
-class Response(BaseModel):
-    status_code: int
-    response_type: str
-    description: str
-    data: Optional[Any]
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "status_code": 200,
-                "response_type": "success",
-                "description": "Operation successful",
-                "data": "Sample data",
-            }
-        }
+        name = "users"
