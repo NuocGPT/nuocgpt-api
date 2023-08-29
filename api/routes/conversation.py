@@ -20,7 +20,7 @@ async def get_conversations():
 @router.post(
     "",
     response_description="Conversation data added into the database",
-    response_model=Conversation,
+    response_model=Message,
 )
 async def add_conversation_data(data: AddConversationDto = Body(...)):
     return await add_conversation(data)
