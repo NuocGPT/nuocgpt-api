@@ -32,5 +32,5 @@ class LangChainOpenAIConstants(BaseConstants):
 class AWSConstants(BaseConstants):
     AWS_ACCESS_KEY = Settings().aws_access_key
     AWS_SECRET_ACCESS_KEY = Settings().aws_secret_access_key
-    REGION_NAME = 'ap-southeast-1'
-    S3_BUCKET = 'nuocgpt-vectorstore'
+    REGION_NAME = Settings().aws_region
+    S3_BUCKET = Settings().aws_bucket

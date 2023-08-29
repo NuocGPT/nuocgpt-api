@@ -20,6 +20,6 @@ async def start_database():
 async def read_root():
     return {"message": "Welcome to NướcGPT."}
 
-app.include_router(ConversationRouter, tags=["Conversation"], prefix="/conversations")
+app.include_router(ConversationRouter, tags=["Conversation"], prefix="/v1/conversations")
 
 add_pagination(app)
