@@ -3,14 +3,14 @@ from typing import Dict
 
 import jwt
 
-from api.config.config import Settings
+from config.config import Settings
 
 
 def token_response(token: str):
     return {"access_token": token}
 
 
-secret_key = Settings().secret_key
+secret_key = Settings().SECRET_KEY
 
 
 def sign_jwt(user_id: str) -> Dict[str, str]:

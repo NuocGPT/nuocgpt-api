@@ -3,7 +3,8 @@ WORKDIR /app
 
 ADD requirements.txt /app/requirements.txt
 
-RUN pip install --upgrade -r requirements.txt
+RUN pip install -r requirements.txt
+RUN pip install chromadb==0.4.8
 
 EXPOSE 8080
 

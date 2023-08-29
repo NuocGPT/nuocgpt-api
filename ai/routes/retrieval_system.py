@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from configs.config import Settings
+from config.config import Settings
 
 import os
 
@@ -10,8 +10,9 @@ from schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest
 from core.data_ingestor import DataIngestor
 from core.constants import IngestDataConstants
 
-OPENAI_API_KEY = Settings().openai_api_key
-
+OPENAI_API_KEY = Settings().OPENAI_API_KEY
+print('OPENAI_API_KEY')
+print(OPENAI_API_KEY)
 MAX_FILE_SIZE = IngestDataConstants.MAX_FILE_SIZE
 ALLOWED_EXTENSIONS = IngestDataConstants.ALLOWED_EXTENSIONS
 

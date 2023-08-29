@@ -1,10 +1,10 @@
-from schemas.schemas import QARequest
-from llm.base_model.langchain_openai import LangchainOpenAI
+from ai.schemas.schemas import QARequest
+from ai.llm.base_model.langchain_openai import LangchainOpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
-from core.constants import IngestDataConstants
+from ai.core.constants import IngestDataConstants
 import openai
 import backoff
 

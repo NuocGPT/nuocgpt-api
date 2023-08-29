@@ -4,6 +4,8 @@ from uuid import UUID
 from api.models.conversation import Conversation
 from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
 from api.schemas.conversation import *
+from ai.routes.chat import chat
+from ai.schemas.schemas import QARequest
 
 conversation_collection = Conversation
 message_collection = Message
@@ -38,8 +40,13 @@ async def add_message(id: UUID, data: AddMessageDto) -> Message:
         author={"id": data.author_id, "role": AuthorTypeEnum.user},
         content={"content_type": ContentTypeEnum.text, "parts": [data.message]}
     )
-    return await new_message.create()
-
+    await new_message.create()
+    answer = await chat(QARequest(question=data.message))
+    return Message(
+        conversation_id=id,
+        author={"role": AuthorTypeEnum.system},
+        content={"content_type": ContentTypeEnum.text, "parts": [answer]}
+    )
 
 async def retrieve_conversation(id: UUID) -> Conversation:
     conversation = await conversation_collection.get(id)
