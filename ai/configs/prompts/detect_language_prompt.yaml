@@ -1,0 +1,14 @@
+_type: prompt
+input_variables:
+  - question
+template: >
+  I want you act as a language detector. I will type a corpus in any language and you will answer me in which language the corpus I wrote is in you. 
+  Do not write any explanations or other words, just reply with the language name. Then add your answer into a percent sign. Here are some examples for you:
+  Input: "como vai você como está indo o seu dia?"
+  Output: %Portuguese%
+  Input: "como estas como va tu dia?"
+  Output: %Spanish%
+  Input: "how are you how is your day going?"
+  Output: %English%
+  Input: "{question}"
+  Output:
