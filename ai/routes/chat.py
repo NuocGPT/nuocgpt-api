@@ -1,24 +1,33 @@
-from ai.schemas.schemas import QARequest
-from ai.llm.base_model.langchain_openai import LangchainOpenAI
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain.vectorstores import Chroma
-from langchain.embeddings.openai import OpenAIEmbeddings
-from ai.core.constants import IngestDataConstants
-import openai
-import backoff
+import logging
+from langchain.callbacks import get_openai_callback
 
-@backoff.on_exception(backoff.expo, openai.error.RateLimitError)
-def openai_embedding_with_backoff():
-    return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
+from schemas.schemas import QARequest
+from llm.base_model.langchain_openai import LangchainOpenAI
+from core.utils import preprocess_suggestion_request
 
 async def chat(request: QARequest) -> str:
-    question = request.question
+    processed_request = preprocess_suggestion_request(request)
 
-    chain = LangchainOpenAI(question)
-    embeddings = openai_embedding_with_backoff()
-    vectorstore = Chroma(persist_directory=chain.vectorstore, embedding_function=embeddings)
-    qa_chain = RetrievalQA.from_chain_type(llm=ChatOpenAI(temperature=0), chain_type="stuff", retriever=vectorstore.as_retriever(search_type="mmr"))
-    response = qa_chain.run(question)
+    language = processed_request.get("language")
+
+    qa_chain =  LangchainOpenAI(
+        vectorstore=processed_request.get("vectorstore"),
+        vectorstore_retriever= processed_request.get("vectorstore_retriever"),
+        metadata=processed_request.get("metadata"),
+        language = language
+    ).get_chain()
+
+    try:
+        with get_openai_callback() as cb:
+            chat_history = processed_request.get("chat_history")
+
+            response = qa_chain({
+                            "question": processed_request.get("question"),
+                            "chat_history": chat_history,
+                        })
+            
+    except Exception as e:
+        logging.exception(e)
+        return {"success": False, "msg": f"{str(e)}"}
 
     return response

@@ -30,10 +30,15 @@ class LangChainDataLoader:
 
     def preprocessing_qa_prompt(
         self,
+        language: str,
         metadata: str
     ):
         for prompt_title in ["qaPrompt"]:
             qa_template = self.prompts[prompt_title].template
+            qa_template += (
+                        f"Based on the conversation chat history and the new request of customer, "
+                        f"write a helpful response in {language} language"
+                    )
 
             qa_template += "\nResponse:\n\n"
 

@@ -1,6 +1,45 @@
+import os
 import re
-from typing import Tuple
+import backoff
 
+from typing import Tuple
+import openai
+
+from fastapi import HTTPException
+
+from langchain.embeddings.openai import OpenAIEmbeddings
+
+from schemas.schemas import QARequest
+from llm.base_model.langchain_openai import LangchainOpenAI
+from core.message_shortener import shorten_message
+from core.constants import IngestDataConstants
+
+@backoff.on_exception(backoff.expo, openai.error.RateLimitError)
+def openai_embedding_with_backoff():
+    return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
+
+def preprocess_suggestion_request(request_body: QARequest):
+    messages = request_body.messages
+    language = request_body.language
+    metadata = request_body.metadata
+
+    if len(messages):
+        chat_history, question, previous_response = preprocess_chat_history(messages)
+    else:
+        raise HTTPException(status_code=400, detail="message is missing")
+    
+    vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{language}/")
+    vectorstore, vectorstore_retriever = LangchainOpenAI.get_langchain_retriever(vectorstore_folder_path)
+
+    return {
+        "question": question,
+        "chat_history": chat_history,
+        "vectorstore": vectorstore,
+        "vectorstore_retriever": vectorstore_retriever,
+        "previous_response": previous_response,
+        "metadata": metadata,
+        "language": language
+    }
 
 def preprocess_chat_history(
     chat_history: list, max_words_each_message: int = 400, max_recent_chat_history: int = 4
