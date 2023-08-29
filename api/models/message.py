@@ -4,6 +4,7 @@ from pydantic import Field, BaseModel
 from enum import Enum
 from datetime import datetime
 from typing import List
+from typing import Optional
 
 
 class AuthorTypeEnum(str, Enum):
@@ -11,7 +12,7 @@ class AuthorTypeEnum(str, Enum):
     system = 'system'
 
 class Author(BaseModel):
-    id: UUID
+    id: Optional[UUID]
     role: AuthorTypeEnum
 
 
