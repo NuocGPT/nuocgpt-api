@@ -2,7 +2,7 @@ import os
 from typing import Dict, Type, Union
 from langchain.llms import BaseLLM, type_to_cls_dict
 from langchain.chat_models import ChatOpenAI
-from configs.config import Settings
+from config.config import Settings
 
 
 class BaseConstants:
@@ -30,7 +30,7 @@ class LangChainOpenAIConstants(BaseConstants):
 
 
 class AWSConstants(BaseConstants):
-    AWS_ACCESS_KEY = Settings().aws_access_key
-    AWS_SECRET_ACCESS_KEY = Settings().aws_secret_access_key
-    REGION_NAME = Settings().aws_region
-    S3_BUCKET = Settings().aws_bucket
+    AWS_ACCESS_KEY = Settings().AWS_ACCESS_KEY
+    AWS_SECRET_ACCESS_KEY = Settings().AWS_SECRET_ACCESS_KEY
+    REGION_NAME = Settings().AWS_REGION
+    S3_BUCKET = Settings().AWS_S3_BUCKET

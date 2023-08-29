@@ -10,9 +10,13 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain import LLMChain
 
-from llm.data_loader.load_langchain_config import LangChainDataLoader
-from core.constants import LangChainOpenAIConstants, IngestDataConstants
-from core.aws_service import AWSService
+from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
+from ai.core.constants import LangChainOpenAIConstants, IngestDataConstants
+from ai.core.aws_service import AWSService
+import os
+from config.config import Settings
+ 
+os.environ["OPENAI_API_KEY"] = Settings().OPENAI_API_KEY
 
 class LangchainOpenAI:
     """Langchain OpenAI"""

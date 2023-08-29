@@ -2,11 +2,14 @@ from fastapi import FastAPI, Depends
 from fastapi_paginate import add_pagination
 
 from api.auth.jwt_bearer import JWTBearer
-from api.config.config import initiate_database
+from config.config import initiate_database
 
 from api.routes.conversation import router as ConversationRouter
 
-app = FastAPI()
+app = FastAPI(
+    title="NướcGPT API Documentation",
+    version="1.0.0"
+)
 
 token_listener = JWTBearer()
 

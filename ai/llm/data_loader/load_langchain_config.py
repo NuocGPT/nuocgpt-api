@@ -8,7 +8,7 @@ import yaml
 from langchain import BasePromptTemplate, PromptTemplate
 from langchain.prompts import load_prompt
 
-from core.constants import BaseConstants
+from ai.core.constants import BaseConstants
 
 class LangChainDataLoader:
     """Langchain Data loader."""

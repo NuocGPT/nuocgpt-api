@@ -1,6 +1,6 @@
 import os
 import boto3
-from core.constants import AWSConstants
+from ai.core.constants import AWSConstants
 
 class AWSService:
     def __init__(self) -> None:

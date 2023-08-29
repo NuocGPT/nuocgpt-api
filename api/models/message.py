@@ -3,6 +3,7 @@ from beanie import Document
 from pydantic import Field, BaseModel
 from enum import Enum
 from datetime import datetime
+from typing import List
 
 
 class AuthorTypeEnum(str, Enum):
@@ -19,7 +20,7 @@ class ContentTypeEnum(str, Enum):
 
 class Content(BaseModel):
     content_type: ContentTypeEnum
-    parts: [str]
+    parts: List[str]
 
     class Config:
         arbitrary_types_allowed = True
