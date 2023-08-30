@@ -4,6 +4,8 @@ import re
 from typing import Tuple
 from fastapi import HTTPException
 import yaml
+import openai
+import backoff
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
@@ -12,24 +14,27 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain import LLMChain
 from langchain.retrievers import MergerRetriever
 from langchain.vectorstores import Chroma
-from langchain.vectorstores.base import VectorStoreRetriever, VectorStore
+from langchain.vectorstores.base import VectorStore
+from langchain.embeddings.openai import OpenAIEmbeddings
 
-from llm.data_loader.load_langchain_config import LangChainDataLoader
-from core.constants import LangChainOpenAIConstants, IngestDataConstants
-from core.aws_service import AWSService
-from core.utils import openai_embedding_with_backoff
-from llm.base_model.retrieval_chain import CustomConversationalRetrievalChain
+from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
+from ai.core.constants import LangChainOpenAIConstants, IngestDataConstants
+from ai.core.aws_service import AWSService
+from ai.llm.base_model.retrieval_chain import CustomConversationalRetrievalChain
+from ai.core.constants import IngestDataConstants
 
 from config.config import Settings
  
 os.environ["OPENAI_API_KEY"] = Settings().OPENAI_API_KEY
 
+@backoff.on_exception(backoff.expo, openai.error.RateLimitError)
+def openai_embedding_with_backoff():
+    return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
+
 class LangchainOpenAI:
     """Langchain OpenAI"""
     def __init__(
         self,
-        vectorstore: VectorStore,
-        vectorstore_retriever: VectorStoreRetriever = None,
         language: str = "English",
         metadata: list[dict] = None,
     ):
@@ -42,8 +47,8 @@ class LangchainOpenAI:
             metadata=self._format_dict_list(metadata or []),
             language=self.lang
         )
-        self.vectorstore = vectorstore
-        self.vectorstore_retriever = vectorstore_retriever
+        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{language}/")
+        self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path)
         s3_client = AWSService()
         s3_client.download_from_s3(self.vectorstore)
 
@@ -78,13 +83,13 @@ class LangchainOpenAI:
     
     @staticmethod
     def get_langchain_retriever(
-        vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None
+        self, vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None
     ) -> Tuple[VectorStore, MergerRetriever]:
         if vectorstore_search_kwargs is None:
             vectorstore_search_kwargs = {"k": 3, "score_threshold": 0.3}
 
         try:
-            embeddings = openai_embedding_with_backoff()
+            embeddings = self.openai_embedding_with_backoff()
             vectorstore = Chroma(persist_directory=vectorstore_folder_path, embedding_function=embeddings)
             
             return vectorstore, vectorstore.as_retriever()

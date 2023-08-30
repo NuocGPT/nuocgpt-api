@@ -1,9 +1,9 @@
 import logging
 from langchain.callbacks import get_openai_callback
 
-from schemas.schemas import QARequest
-from llm.base_model.langchain_openai import LangchainOpenAI
-from core.utils import preprocess_suggestion_request
+from ai.schemas.schemas import QARequest
+from ai.llm.base_model.langchain_openai import LangchainOpenAI
+from ai.core.utils import preprocess_suggestion_request
 
 async def chat(request: QARequest) -> str:
     processed_request = preprocess_suggestion_request(request)

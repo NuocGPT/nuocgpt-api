@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import Body, File, UploadFile
 from pydantic import BaseModel
 
@@ -17,6 +17,6 @@ class ImportMultipleFilesRequest(BaseModel):
 
 class QARequest(BaseModel):
     question: str
-    messages: list = Body(None, description="List of chat history")
-    language: str = Body("English", description="Language of expected response")
-    metadata: list = Body([], description="List of metadata")
+    messages: Optional[list] = Body(None, description="List of chat history")
+    language:  Optional[str] = Body("English", description="Language of expected response")
+    metadata: Optional[list] = Body([], description="List of metadata")

@@ -1,4 +1,4 @@
-from llm.base_model.langchain_openai import LangchainOpenAI
+from ai.llm.base_model.langchain_openai import LangchainOpenAI
 
 from nltk.tokenize import word_tokenize
 from langchain.schema import HumanMessage
