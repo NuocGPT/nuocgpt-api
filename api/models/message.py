@@ -3,8 +3,7 @@ from beanie import Document
 from pydantic import Field, BaseModel
 from enum import Enum
 from datetime import datetime
-from typing import List
-from typing import Optional
+from typing import Optional, List
 
 
 class AuthorTypeEnum(str, Enum):

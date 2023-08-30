@@ -5,6 +5,7 @@ from api.auth.jwt_bearer import JWTBearer
 from config.config import initiate_database
 
 from api.routes.conversation import router as ConversationRouter
+from api.routes.feedback import router as FeedbackRouter
 
 app = FastAPI(
     title="NướcGPT API Documentation",
@@ -24,5 +25,6 @@ async def read_root():
     return {"message": "Welcome to NướcGPT."}
 
 app.include_router(ConversationRouter, tags=["Conversation"], prefix="/v1/conversations")
+app.include_router(FeedbackRouter, tags=["Feedback"], prefix="/v1/feedbacks")
 
 add_pagination(app)
