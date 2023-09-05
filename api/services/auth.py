@@ -44,7 +44,9 @@ async def user_signup(data: SignUpDto = Body(...)):
     new_user = User(
         email=data.email,
         password=data.password,
-        verify_code=verify_code
+        verify_code=verify_code,
+        verify_code_expire=datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES),
+        created_at=datetime.now()
     )
 
     user = await new_user.create()

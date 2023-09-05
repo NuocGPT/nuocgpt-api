@@ -15,19 +15,25 @@ async def retrieve_conversations(user_id: UUID) -> List[Conversation]:
 
 
 async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
-    new_conversation = Conversation(title=data.title, author_id=user_id)
+    new_conversation = Conversation(
+        title=data.title,
+        author_id=user_id,
+        created_at=datetime.now()
+    )
     conversation = await new_conversation.create()
     user_message = Message(
         conversation_id=conversation.id,
         author={"id": user_id, "role": AuthorTypeEnum.user},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.message]}
+        content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
+        created_at=datetime.now()
     )
     await user_message.create()
     answer = await chat(QARequest(question=data.message))
     system_message = Message(
         conversation_id=conversation.id,
         author={"role": AuthorTypeEnum.system},
-        content={"content_type": ContentTypeEnum.text, "parts": [answer]}
+        content={"content_type": ContentTypeEnum.text, "parts": [answer]},
+        created_at=datetime.now()
     )
     return await system_message.create()
 
@@ -41,14 +47,16 @@ async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
     user_message = Message(
         conversation_id=id,
         author={"id": user_id, "role": AuthorTypeEnum.user},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.message]}
+        content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
+        created_at=datetime.now()
     )
     await user_message.create()
     answer = await chat(QARequest(question=data.message))
     system_message = Message(
         conversation_id=id,
         author={"role": AuthorTypeEnum.system},
-        content={"content_type": ContentTypeEnum.text, "parts": [answer]}
+        content={"content_type": ContentTypeEnum.text, "parts": [answer]},
+        created_at=datetime.now()
     )
     await system_message.create()
     await Conversation.find_one(Conversation.id == id).update({ "$set": { Conversation.updated_at: datetime.now() }})
