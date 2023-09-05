@@ -17,7 +17,6 @@ services:
       SMTP_PORT: 465
       SMTP_USER: long.nguyen@enouvo.com
       SMTP_PASS: knnomsfsyqllxpag
-      SMTP_FROM: services@nuocgpt.com
     depends_on:
       - mongodb
     volumes:
