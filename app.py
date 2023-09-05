@@ -8,6 +8,7 @@ from config.config import initiate_database
 from api.routes.conversation import router as ConversationRouter
 from api.routes.feedback import router as FeedbackRouter
 from api.routes.auth import router as AuthRouter
+from api.routes.me import router as MeRouter
 
 app = FastAPI(
     title="NướcGPT API Documentation",
@@ -46,6 +47,12 @@ app.include_router(
     FeedbackRouter,
     tags=["Feedback"],
     prefix="/v1/feedbacks",
+    dependencies=[Depends(token_listener)]
+)
+app.include_router(
+    MeRouter,
+    tags=["Me"],
+    prefix="/v1/me",
     dependencies=[Depends(token_listener)]
 )
 
