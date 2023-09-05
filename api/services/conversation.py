@@ -18,7 +18,8 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
     new_conversation = Conversation(
         title=data.title,
         author_id=user_id,
-        created_at=datetime.now()
+        created_at=datetime.now(),
+        updated_at=datetime.now()
     )
     conversation = await new_conversation.create()
     user_message = Message(
