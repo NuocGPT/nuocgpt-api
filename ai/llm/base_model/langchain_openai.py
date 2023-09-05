@@ -35,23 +35,29 @@ class LangchainOpenAI:
     """Langchain OpenAI"""
     def __init__(
         self,
-        language: str = "English",
+        question,
+        language: str = None,
         metadata: list[dict] = None,
     ):
         self.output_parser = None
         self.is_chat_model, self.llm_cls, self.llm_model = self.load_llm_model()
+        
+        if language == None:
+            self.lang = self._detect_language(question)
+        else:
+            self.lang = language
+
         self.data_loader = LangChainDataLoader()
-        self.lang = language
 
         self.data_loader.preprocessing_qa_prompt(
             metadata=self._format_dict_list(metadata or []),
             language=self.lang
         )
+
         vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{language}/")
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path)
         s3_client = AWSService()
-        s3_client.download_from_s3(self.vectorstore)
-
+        s3_client.download_from_s3(self.vectorstore_path)
 
     def get_chain(self) -> ConversationalRetrievalChain:
         prompt_title = "qaPrompt"
@@ -112,6 +118,44 @@ class LangchainOpenAI:
         except Exception as e:
             language = "English"
         return language
+    
+    def get_document_sources(
+        self, question: str, chat_history: list, relevant_threshold: float = 0.65, top_k: int = 4
+    ) -> list:
+        """Get document sources for question/answering."""
+        doc_sources = set()
+
+        search_result = self.get_relevant_documents(question, chat_history, top_k=top_k)
+
+        for document, score in search_result[:top_k]:
+            if score > relevant_threshold:
+                source_url = document.metadata.get("source", None)
+                doc_sources.add(source_url)
+
+        return list(doc_sources)
+    
+    def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 4) -> list:
+        """Get document sources for question/answering."""
+        chat_history_str = self._get_chat_history_str(chat_history)
+        condense_question_prompt = self.data_loader.prompts["condensePrompt"].format(
+            question=question,
+            chat_history=chat_history_str,
+        )
+        condense_question = self.llm_model.generate([[HumanMessage(content=condense_question_prompt)]])
+        if condense_question:
+            condense_question = condense_question.generations[0][0].text.strip()
+
+        search_result = self.vectorstore.similarity_search_with_relevance_scores(query=condense_question)
+
+        return search_result[:top_k]
+    
+    def _get_chat_history_str(self, chat_history: list) -> str:
+        buffer = ""
+        for dialogue_turn in chat_history:
+            customer = f"Customer: {dialogue_turn[0]}"
+            ai = f"Agent: {dialogue_turn[1]}"
+            buffer += "\n" + "\n".join([customer, ai])
+        return buffer
     
     def _format_dict_list(self, dict_list: list[dict]):
         result = ""

@@ -8,7 +8,6 @@ class AWSService:
         self.aws_access_key = AWSConstants.AWS_ACCESS_KEY
         self.aws_secret_key = AWSConstants.AWS_SECRET_ACCESS_KEY
         self.region_name = AWSConstants.REGION_NAME
-
         # Initialize the S3 client
         self.s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key, aws_secret_access_key=self.aws_secret_key, region_name=self.region_name)
 
@@ -23,13 +22,14 @@ class AWSService:
                 self.s3.upload_file(local_file_path, s3_bucket, s3_key)
                 print(f'Uploaded {local_file_path} to s3://{s3_bucket}/{s3_key}')
 
-    def download_from_s3(self, local_folder):
+    def download_from_s3(self):
         s3_bucket = AWSConstants.S3_BUCKET
         objects = self.s3.list_objects_v2(Bucket=s3_bucket)
         for obj in objects.get('Contents', []):
             s3_key = obj['Key']
-            local_file_path = os.path.join(local_folder, os.path.relpath(s3_key))
-            
+            local_file_path = os.path.join("/tmp/", s3_key)
             os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
-            self.s3.download_file(s3_bucket, s3_key, local_file_path)
+            with open(local_file_path, "wb") as f:
+                self.s3.download_fileobj(s3_bucket, s3_key, f)
+                f.close()
             print(f'Downloaded s3://{s3_bucket}/{s3_key} to {local_file_path}')

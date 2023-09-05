@@ -14,7 +14,7 @@ class IngestDataConstants(BaseConstants):
     TEMP_DB_FOLDER = '/tmp/vectorstores/'
     MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
     ALLOWED_EXTENSIONS = ["pdf", "json"]
-    TEMP_UPLOADED_FOLDER = '/tmp/uploaded/'
+    TEMP_UPLOADED_FOLDER = 'tmp/uploaded/'
 
 class LangChainOpenAIConstants(BaseConstants):
     type_to_cls_dict_plus: Dict[str, Type[Union[BaseLLM, ChatOpenAI]]] = {k: v for k, v in type_to_cls_dict.items()}

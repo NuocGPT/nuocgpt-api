@@ -16,7 +16,17 @@ class ImportMultipleFilesRequest(BaseModel):
     lang: str
 
 class QARequest(BaseModel):
-    question: str
-    messages: Optional[list] = Body(None, description="List of chat history")
+    """Request schema for QA. Chat history format:
+    [
+        {
+            "role": "Role",
+            "content": "content",    
+        },
+        {
+            "role": "Role",
+            "content": "content",    
+        }
+    ]"""
+    messages: list = Body(None, description="List of chat history")
     language:  Optional[str] = Body("English", description="Language of expected response")
     metadata: Optional[list] = Body([], description="List of metadata")
