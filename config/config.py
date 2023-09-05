@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     AWS_S3_BUCKET: str = "aws_bucket"
     AWS_REGION: str = "aws_region"
 
+    # Mail
+    SMTP_HOST: str = "smtp_host"
+    SMTP_PORT: str = "smtp_port"
+    SMTP_USER: str = "smtp_user"
+    SMTP_PASS: str = "smtp_pass"
+    SMTP_FROM: str = "smtp_from"
+
     class Config:
         env_file = ".env"
         from_attributes = True

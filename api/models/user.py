@@ -1,12 +1,17 @@
 from uuid import UUID, uuid4
-from beanie import Document
-from pydantic import EmailStr, Field, ConfigDict
+from beanie import Document, Indexed
+from pydantic import EmailStr, Field
+from datetime import datetime, timedelta
 
 
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
-    email: EmailStr
+    email: Indexed(EmailStr, unique=True)
     password: str
+    is_verified: bool = False
+    verify_code: str = None
+    verify_code_expire: datetime = datetime.now() + timedelta(minutes=10)
+    created_at: datetime = datetime.now()
 
     class Config:
         arbitrary_types_allowed = True
