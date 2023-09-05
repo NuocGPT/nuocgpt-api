@@ -2,6 +2,8 @@ import json
 import os
 import re
 import yaml
+import backoff
+import openai
 
 from langchain.vectorstores.base import VectorStoreRetriever, VectorStore
 from langchain.chat_models import ChatOpenAI
@@ -9,6 +11,9 @@ from langchain.schema import HumanMessage
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain import LLMChain
+from langchain.vectorstores import Chroma
+from langchain.embeddings.openai import OpenAIEmbeddings
+
 
 from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
 from ai.core.constants import LangChainOpenAIConstants, IngestDataConstants
@@ -17,6 +22,9 @@ import os
 from config.config import Settings
  
 os.environ["OPENAI_API_KEY"] = Settings().OPENAI_API_KEY
+@backoff.on_exception(backoff.expo, openai.error.RateLimitError)
+def openai_embedding_with_backoff():
+    return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
 
 class LangchainOpenAI:
     """Langchain OpenAI"""
@@ -34,9 +42,12 @@ class LangchainOpenAI:
             metadata=self._format_dict_list(metadata or []),
         )
         
-        self.vectorstore = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
+        self.vectorstore_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
+
+        self.vectorstore = Chroma(persist_directory=self.vectorstore_path, embedding_function=openai_embedding_with_backoff())
+
         s3_client = AWSService()
-        s3_client.download_from_s3(self.vectorstore)
+        s3_client.download_from_s3(self.vectorstore_path)
 
 
     def get_chain(self) -> ConversationalRetrievalChain:
@@ -101,25 +112,27 @@ class LangchainOpenAI:
     def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 4) -> list:
         """Get document sources for question/answering."""
         chat_history_str = self._get_chat_history_str(chat_history)
-
         condense_question_prompt = self.data_loader.prompts["condensePrompt"].format(
             question=question,
             chat_history=chat_history_str,
         )
         condense_question = self.llm_model.generate([[HumanMessage(content=condense_question_prompt)]])
-
         if condense_question:
             condense_question = condense_question.generations[0][0].text.strip()
 
-        search_result = self.vectorstore.similarity_search_with_relevance_scores(condense_question)
+        search_result = self.vectorstore.similarity_search_with_relevance_scores(query=condense_question)
 
         return search_result[:top_k]
     
     def _get_chat_history_str(self, chat_history: list) -> str:
         buffer = ""
-        for dialogue_turn in chat_history:
-            customer = f"Customer: {dialogue_turn[0]}"
-            ai = f"Agent: {dialogue_turn[1]}"
+        customer = ""
+        ai = ""
+        for i, dialogue_turn in enumerate(chat_history):
+            if i % 2 == 0:
+                customer = f"Customer: {dialogue_turn}"
+            else:
+                ai = f"Agent: {dialogue_turn}"
             buffer += "\n" + "\n".join([customer, ai])
         return buffer
     
