@@ -1,5 +1,6 @@
 from uuid import UUID
 from typing import Union
+from datetime import datetime
 
 from api.models.feedback import Feedback
 from api.schemas.feedback import *
@@ -12,7 +13,8 @@ async def add_feedback(user_id: UUID, data: AddFeedbackDto) -> Feedback:
         rating=data.rating,
         tags=data.tags,
         text=data.text,
-        user_id=user_id
+        user_id=user_id,
+        created_at=datetime.now()
     )
     feedback = await new_feedback.create()
     return feedback
