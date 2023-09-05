@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_paginate import add_pagination
 
@@ -7,6 +7,7 @@ from config.config import initiate_database
 
 from api.routes.conversation import router as ConversationRouter
 from api.routes.feedback import router as FeedbackRouter
+from api.routes.auth import router as AuthRouter
 
 app = FastAPI(
     title="NướcGPT API Documentation",
@@ -34,7 +35,18 @@ async def start_database():
 async def read_root():
     return {"message": "Welcome to NướcGPT."}
 
-app.include_router(ConversationRouter, tags=["Conversation"], prefix="/v1/conversations")
-app.include_router(FeedbackRouter, tags=["Feedback"], prefix="/v1/feedbacks")
+app.include_router(AuthRouter, tags=["Auth"], prefix="/v1/auth")
+app.include_router(
+    ConversationRouter,
+    tags=["Conversation"], 
+    prefix="/v1/conversations",
+    dependencies=[Depends(token_listener)]
+)
+app.include_router(
+    FeedbackRouter,
+    tags=["Feedback"],
+    prefix="/v1/feedbacks",
+    dependencies=[Depends(token_listener)]
+)
 
 add_pagination(app)
