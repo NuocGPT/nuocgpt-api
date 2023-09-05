@@ -3,6 +3,7 @@ from beanie import Document, Indexed
 from pydantic import EmailStr, Field
 from datetime import datetime, timedelta
 
+from config.config import Settings
 
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
@@ -10,7 +11,7 @@ class User(Document):
     password: str
     is_verified: bool = False
     verify_code: str = None
-    verify_code_expire: datetime = datetime.now() + timedelta(minutes=10)
+    verify_code_expire: datetime = datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES)
     created_at: datetime = datetime.now()
 
     class Config:
