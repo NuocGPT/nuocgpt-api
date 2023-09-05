@@ -4,8 +4,6 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseSettings
 
-import api.models as models
-
 
 class Settings(BaseSettings):
     # database configurations
@@ -27,14 +25,8 @@ class Settings(BaseSettings):
     SMTP_PORT: str = "smtp_port"
     SMTP_USER: str = "smtp_user"
     SMTP_PASS: str = "smtp_pass"
+    SMTP_OTP_EXPIRES_MINUTES: int = 10
 
     class Config:
         env_file = ".env"
         from_attributes = True
-
-
-async def initiate_database():
-    client = AsyncIOMotorClient(Settings().DATABASE_URL)
-    await init_beanie(
-        database=client.get_default_database(), document_models=models.__all__
-    )

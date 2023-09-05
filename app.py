@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_paginate import add_pagination
 
 from api.auth.jwt_bearer import JWTBearer
-from config.config import initiate_database
+from api.database import initiate_database
 
 from api.routes.conversation import router as ConversationRouter
 from api.routes.feedback import router as FeedbackRouter

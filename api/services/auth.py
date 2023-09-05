@@ -8,6 +8,7 @@ from api.schemas.auth import *
 from config.constants import ErrorMessage
 from api.services.mail import send_otp
 from api.utils.string import generateOTP
+from config.config import Settings
 
 
 hash_helper = CryptContext(schemes=["bcrypt"])
@@ -18,7 +19,7 @@ async def user_signin(data: SignInDto = Body(...)):
     if user:
         if not user.is_verified:
             verify_code = generateOTP(6)
-            await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=10) }})
+            await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
             send_otp(user.email, verify_code)
             raise HTTPException(status_code=403, detail=ErrorMessage.USER_NOT_VERIFIED)
 
@@ -69,6 +70,6 @@ async def resend_verify_otp(data: ResendVerifyOTPDto = Body(...)):
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
 
     verify_code = generateOTP(6)
-    await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=10) }})
+    await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
     send_otp(user.email, verify_code)
     return True
