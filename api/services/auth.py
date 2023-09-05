@@ -24,7 +24,7 @@ async def user_signin(data: SignInDto = Body(...)):
 
         password = hash_helper.verify(data.password, user.password)
         if password:
-            return sign_jwt(user.id)
+            return sign_jwt(str(user.id))
 
         raise HTTPException(status_code=401, detail=ErrorMessage.INCORRECT_EMAIL_OR_PASSWORD)
 
@@ -58,7 +58,7 @@ async def verify_otp(data: VerifyOTPDto = Body(...)):
 
     if user.verify_code == data.verify_code and user.verify_code_expire >= datetime.now():
         await user.update({"$set": { "is_verified": True }})
-        return sign_jwt(user.id)
+        return sign_jwt(str(user.id))
 
     raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
 

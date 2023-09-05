@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 class AddConversationDto(BaseModel):
     title: Optional[str] = None
-    author_id: UUID
     message: str
 
     class Config:
@@ -18,7 +17,6 @@ class AddConversationDto(BaseModel):
 
 class AddMessageDto(BaseModel):
     message: str
-    author_id: UUID
 
     class Config:
         json_schema_extra = {

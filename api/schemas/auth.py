@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 class SignInDto(BaseModel):
@@ -46,5 +47,18 @@ class ResendVerifyOTPDto(BaseModel):
         json_schema_extra = {
             "example": {
                 "email": "sample@enosta.com",
+            }
+        }
+
+
+class Token(BaseModel):
+    user_id: UUID
+    expires: float
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "0321b384-1e67-43b6-b723-3389b19a761e",
+                "expires": "1693900575"
             }
         }
