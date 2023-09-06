@@ -11,7 +11,12 @@ class AddConversationDto(BaseModel):
             "example": {
                 "title": "Assist with user query.",
                 "author_id": "d24beb19-6a51-485d-962f-fd963541f49a",
-                "message": "Hello!"
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Hello",    
+                    }
+                ]
             }
         }
 
@@ -22,6 +27,11 @@ class AddMessageDto(BaseModel):
         json_schema_extra = {
             "example": {
                 "author_id": "d24beb19-6a51-485d-962f-fd963541f49a",
-                "message": "Hello!"
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Hello",    
+                    }
+                ]
             }
         }

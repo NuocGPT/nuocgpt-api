@@ -1,6 +1,29 @@
 import re
+
 from typing import Tuple
 
+from fastapi import HTTPException
+
+from ai.schemas.schemas import QARequest
+from ai.core.message_shortener import shorten_message
+
+def preprocess_suggestion_request(request_body: QARequest):
+    messages = request_body.messages
+    language = request_body.language
+    metadata = request_body.metadata
+
+    if len(messages):
+        chat_history, question, previous_response = preprocess_chat_history(messages)
+    else:
+        raise HTTPException(status_code=400, detail="message is missing")
+
+    return {
+        "question": question,
+        "chat_history": chat_history,
+        "previous_response": previous_response,
+        "metadata": metadata,
+        "language": language
+    }
 
 def preprocess_chat_history(
     chat_history: list, max_words_each_message: int = 400, max_recent_chat_history: int = 4

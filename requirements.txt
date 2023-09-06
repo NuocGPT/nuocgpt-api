@@ -50,6 +50,7 @@ mpmath==1.3.0
 multidict==6.0.4
 mypy-extensions==1.0.0
 nest-asyncio==1.5.7
+nltk==3.8.1
 numexpr==2.8.5
 numpy==1.25.2
 onnxruntime==1.15.1

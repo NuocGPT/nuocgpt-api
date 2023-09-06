@@ -1,24 +1,18 @@
 import logging
 import os
-import backoff
+
 
 from typing import List, Text
 
-import openai
-
 from langchain.document_loaders import PyPDFium2Loader
 from langchain.text_splitter import TokenTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 
 from llama_index import download_loader
 
 from core.constants import IngestDataConstants
 from core.aws_service import AWSService
-
-@backoff.on_exception(backoff.expo, openai.error.RateLimitError)
-def openai_embedding_with_backoff():
-    return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
+from core.utils import openai_embedding_with_backoff
 
 class DataIngestor:
     """Ingest data with different format to create vectorstore"""
