@@ -9,25 +9,32 @@ from ai.routes.chat import chat
 from ai.schemas.schemas import QARequest
 
 
-async def retrieve_conversations() -> List[Conversation]:
-    conversations = await Conversation.all().sort("-updated_at").to_list()
+async def retrieve_conversations(user_id: UUID) -> List[Conversation]:
+    conversations = await Conversation.find(Conversation.author_id == user_id).sort("-updated_at").to_list()
     return conversations
 
 
-async def add_conversation(data: AddConversationDto) -> Message:
-    new_conversation = Conversation(title=data.title, author_id=data.author_id)
+async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
+    new_conversation = Conversation(
+        title=data.title,
+        author_id=user_id,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
     conversation = await new_conversation.create()
     user_message = Message(
         conversation_id=conversation.id,
-        author={"id": data.author_id, "role": AuthorTypeEnum.user},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.messages[0]["content"]]}
+        author={"id": user_id, "role": AuthorTypeEnum.user},
+        content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
+        created_at=datetime.now()
     )
     await user_message.create()
     answer = await chat(QARequest(messages=data.messages))
     system_message = Message(
         conversation_id=conversation.id,
         author={"role": AuthorTypeEnum.system},
-        content={"content_type": ContentTypeEnum.text, "parts": [answer]}
+        content={"content_type": ContentTypeEnum.text, "parts": [answer]},
+        created_at=datetime.now()
     )
     return await system_message.create()
 
@@ -37,18 +44,20 @@ async def retrieve_messages(id) -> List[Message]:
     return messages
 
 
-async def add_message(id: UUID, data: AddMessageDto) -> Message:
+async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
     user_message = Message(
         conversation_id=id,
-        author={"id": data.author_id, "role": AuthorTypeEnum.user},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.messages[0]["content"]]}
+        author={"id": user_id, "role": AuthorTypeEnum.user},
+        content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
+        created_at=datetime.now()
     )
     await user_message.create()
     answer = await chat(QARequest(messages=data.messages))
     system_message = Message(
         conversation_id=id,
         author={"role": AuthorTypeEnum.system},
-        content={"content_type": ContentTypeEnum.text, "parts": [answer]}
+        content={"content_type": ContentTypeEnum.text, "parts": [answer]},
+        created_at=datetime.now()
     )
     await system_message.create()
     await Conversation.find_one(Conversation.id == id).update({ "$set": { Conversation.updated_at: datetime.now() }})

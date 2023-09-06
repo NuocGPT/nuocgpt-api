@@ -1,25 +1,27 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends
 from fastapi_paginate import Page, paginate
 from uuid import UUID
+from typing import Annotated
 
 from api.services.conversation import *
 from api.models.conversation import Conversation
 from api.models.message import Message
 from api.schemas.conversation import *
+from api.auth.jwt_handler import get_user_id
 
 
 router = APIRouter()
 
 
 @router.get("", response_model=Page[Conversation])
-async def get_conversations():
-    conversations = await retrieve_conversations()
+async def get_conversations(user_id: Annotated[dict, Depends(get_user_id)]):
+    conversations = await retrieve_conversations(user_id)
     return paginate(conversations)
 
 
 @router.post("", response_model=Message)
-async def add_conversation_data(data: AddConversationDto = Body(...)):
-    return await add_conversation(data)
+async def add_conversation_data(user_id: Annotated[dict, Depends(get_user_id)], data: AddConversationDto = Body(...)):
+    return await add_conversation(user_id, data)
 
 
 @router.get("/{id}/messages", response_model=Page[Message])
@@ -29,5 +31,5 @@ async def get_messages(id: UUID):
 
 
 @router.post("/{id}/messages", response_model=Message)
-async def add_message_data(id: UUID, data: AddMessageDto = Body(...)):
-    return await add_message(id, data)
+async def add_message_data(user_id: Annotated[dict, Depends(get_user_id)], id: UUID, data: AddMessageDto = Body(...)):
+    return await add_message(id, user_id, data)

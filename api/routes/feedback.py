@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends
 from uuid import UUID
-from typing import Union
+from typing import Annotated, Union
 
+from api.auth.jwt_handler import get_user_id
 from api.models.feedback import Feedback
 from api.schemas.feedback import AddFeedbackDto
 from api.services.feedback import *
@@ -11,8 +12,8 @@ router = APIRouter()
 
 
 @router.post("", response_model=Feedback)
-async def add_feedback_data(data: AddFeedbackDto = Body(...)):
-    return await add_feedback(data)
+async def add_feedback_data(user_id: Annotated[dict, Depends(get_user_id)], data: AddFeedbackDto = Body(...)):
+    return await add_feedback(user_id, data)
 
 
 @router.put("/{id}", response_model=Union[bool, Feedback])

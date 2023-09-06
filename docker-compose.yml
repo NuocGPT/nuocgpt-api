@@ -13,6 +13,10 @@ services:
       AWS_ACCESS_KEY: AKIAYZWP2RCQZIKP4AML
       AWS_S3_BUCKET: nuocgpt-vectorstore
       AWS_REGION: ap-southeast-1
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 465
+      SMTP_USER: long.nguyen@enouvo.com
+      SMTP_PASS: knnomsfsyqllxpag
     depends_on:
       - mongodb
     volumes:
@@ -21,7 +25,7 @@ services:
       - node-network
 
   mongodb:
-    image: mongo:4.0.8
+    image: mongo:7.0.0
     restart: unless-stopped
     ports:
      - 27017:27017
