@@ -131,7 +131,7 @@ class LangchainOpenAI:
 
         return list(doc_sources)
     
-    def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 1) -> list:
+    def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 4) -> list:
         """Get document sources for question/answering."""
         chat_history_str = self._get_chat_history_str(chat_history)
         condense_question_prompt = self.data_loader.prompts["condensePrompt"].format(
