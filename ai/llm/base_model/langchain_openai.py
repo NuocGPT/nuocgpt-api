@@ -41,25 +41,25 @@ class LangchainOpenAI:
     ):
         self.output_parser = None
         self.is_chat_model, self.llm_cls, self.llm_model = self.load_llm_model()
-        
+
+        self.data_loader = LangChainDataLoader()
+
         if language == None:
             self.lang = self._detect_language(question)
         else:
             self.lang = language
-
-        self.data_loader = LangChainDataLoader()
 
         self.data_loader.preprocessing_qa_prompt(
             metadata=self._format_dict_list(metadata or []),
             language=self.lang
         )
 
-        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{language}/")
-        self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path)
+        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
+        self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
         s3_client = AWSService()
-        s3_client.download_from_s3(self.vectorstore_path)
+        s3_client.download_from_s3(vectorstore_folder_path)
 
-    def get_chain(self) -> ConversationalRetrievalChain:
+    def get_chain(self) -> CustomConversationalRetrievalChain:
         prompt_title = "qaPrompt"
 
         docs_chain = load_qa_chain(self.llm_model, prompt=self.data_loader.prompts[prompt_title])
@@ -72,6 +72,20 @@ class LangchainOpenAI:
             max_tokens_limit=3500,
             output_parser=self.output_parser,
         )
+    
+    @staticmethod
+    def get_langchain_retriever(vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None) -> Tuple[VectorStore, MergerRetriever]:
+        if vectorstore_search_kwargs is None:
+            vectorstore_search_kwargs = {"k": 3, "score_threshold": 0.3}
+
+        try:
+            embeddings = openai_embedding_with_backoff()
+            vectorstore = Chroma(persist_directory=vectorstore_folder_path, embedding_function=embeddings)
+            
+            return vectorstore, vectorstore.as_retriever()
+        
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Error when loading vectorstore")
 
     @staticmethod
     def load_llm_model():
@@ -87,22 +101,6 @@ class LangchainOpenAI:
         is_chat_model = isinstance(llm_model, ChatOpenAI)
         return is_chat_model, llm_cls, llm_model
     
-    @staticmethod
-    def get_langchain_retriever(
-        self, vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None
-    ) -> Tuple[VectorStore, MergerRetriever]:
-        if vectorstore_search_kwargs is None:
-            vectorstore_search_kwargs = {"k": 3, "score_threshold": 0.3}
-
-        try:
-            embeddings = self.openai_embedding_with_backoff()
-            vectorstore = Chroma(persist_directory=vectorstore_folder_path, embedding_function=embeddings)
-            
-            return vectorstore, vectorstore.as_retriever()
-        
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Error when loading vectorstore")
-    
     def _detect_language(self, question: str) -> str:
         try:
             language_detect_prompt = self.data_loader.prompts.get("detectLanguagePrompt").template.format(
@@ -114,7 +112,6 @@ class LangchainOpenAI:
             )
             regex = r"\%([^%]+)\%"
             language = re.findall(regex, detected_language)[-1]
-
         except Exception as e:
             language = "English"
         return language
@@ -134,7 +131,7 @@ class LangchainOpenAI:
 
         return list(doc_sources)
     
-    def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 4) -> list:
+    def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 1) -> list:
         """Get document sources for question/answering."""
         chat_history_str = self._get_chat_history_str(chat_history)
         condense_question_prompt = self.data_loader.prompts["condensePrompt"].format(

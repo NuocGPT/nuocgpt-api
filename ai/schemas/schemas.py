@@ -28,5 +28,5 @@ class QARequest(BaseModel):
         }
     ]"""
     messages: list = Body(None, description="List of chat history")
-    language:  Optional[str] = Body("English", description="Language of expected response")
+    language:  Optional[str] = Body(None, description="Language of expected response")
     metadata: Optional[list] = Body([], description="List of metadata")

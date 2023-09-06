@@ -14,12 +14,8 @@ class AddConversationDto(BaseModel):
                 "author_id": "d24beb19-6a51-485d-962f-fd963541f49a",
                 "messages": [
                     {
-                        "role": "User",
+                        "role": "user",
                         "content": "Hello",    
-                    }, 
-                    {
-                        "role": "System",
-                        "content": "Hi",    
                     }
                 ]
             }
@@ -35,12 +31,8 @@ class AddMessageDto(BaseModel):
                 "author_id": "d24beb19-6a51-485d-962f-fd963541f49a",
                 "messages": [
                     {
-                        "role": "User",
+                        "role": "user",
                         "content": "Hello",    
-                    }, 
-                    {
-                        "role": "System",
-                        "content": "Hi",    
                     }
                 ]
             }

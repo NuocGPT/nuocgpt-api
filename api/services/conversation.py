@@ -20,7 +20,7 @@ async def add_conversation(data: AddConversationDto) -> Message:
     user_message = Message(
         conversation_id=conversation.id,
         author={"id": data.author_id, "role": AuthorTypeEnum.user},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.messages]}
+        content={"content_type": ContentTypeEnum.text, "parts": [data.messages[0]["content"]]}
     )
     await user_message.create()
     answer = await chat(QARequest(messages=data.messages))
@@ -41,7 +41,7 @@ async def add_message(id: UUID, data: AddMessageDto) -> Message:
     user_message = Message(
         conversation_id=id,
         author={"id": data.author_id, "role": AuthorTypeEnum.user},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.messages]}
+        content={"content_type": ContentTypeEnum.text, "parts": [data.messages[0]["content"]]}
     )
     await user_message.create()
     answer = await chat(QARequest(messages=data.messages))

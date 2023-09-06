@@ -22,7 +22,7 @@ class AWSService:
                 self.s3.upload_file(local_file_path, s3_bucket, s3_key)
                 print(f'Uploaded {local_file_path} to s3://{s3_bucket}/{s3_key}')
 
-    def download_from_s3(self):
+    def download_from_s3(self, local_folder):
         s3_bucket = AWSConstants.S3_BUCKET
         objects = self.s3.list_objects_v2(Bucket=s3_bucket)
         for obj in objects.get('Contents', []):
