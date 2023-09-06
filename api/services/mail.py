@@ -28,7 +28,7 @@ def get_otp_message(otp: str):
     html = """\
         <html>
             <body>
-                <p>Hello, the veìication code is: <strong>{}</strong></p>
+                <p>Hello, the verification code is: <strong>{}</strong></p>
             </body>
         </html>
         """
