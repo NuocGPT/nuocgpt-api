@@ -29,7 +29,10 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
         created_at=datetime.now()
     )
     await user_message.create()
-    answer = await chat(QARequest(messages=data.messages))
+    answer = await chat(QARequest(messages=[{
+        "role": "user",
+        "content": data.message
+    }]))
     system_message = Message(
         conversation_id=conversation.id,
         author={"role": AuthorTypeEnum.system},
@@ -44,6 +47,9 @@ async def retrieve_messages(id) -> List[Message]:
     return messages
 
 
+def convert_messages(message: Message):
+    return {"role": message.author.role, "content": message.content.parts[0]}
+
 async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
     user_message = Message(
         conversation_id=id,
@@ -52,7 +58,8 @@ async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
         created_at=datetime.now()
     )
     await user_message.create()
-    answer = await chat(QARequest(messages=data.messages))
+    messages = await Message.find(Message.conversation_id == id).sort("created_at").to_list()
+    answer = await chat(QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages]))
     system_message = Message(
         conversation_id=id,
         author={"role": AuthorTypeEnum.system},
