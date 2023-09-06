@@ -8,7 +8,7 @@ services:
     environment:
       DATABASE_URL: mongodb://mongodb:27017/nuocgpt
       SECRET_KEY: guiyfgc837tgf3iw87-012389764
-      OPENAI_API_KEY: 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
+      OPENAI_API_KEY: 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
       AWS_SECRET_ACCESS_KEY: hIlTGM4U6cDzrm++3snM4RmFhxG1d+5CAxIle0Bo
       AWS_ACCESS_KEY: AKIAYZWP2RCQZIKP4AML
       AWS_S3_BUCKET: nuocgpt-vectorstore
