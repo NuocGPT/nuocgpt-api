@@ -11,8 +11,6 @@ from core.data_ingestor import DataIngestor
 from core.constants import IngestDataConstants
 
 OPENAI_API_KEY = Settings().OPENAI_API_KEY
-print('OPENAI_API_KEY')
-print(OPENAI_API_KEY)
 MAX_FILE_SIZE = IngestDataConstants.MAX_FILE_SIZE
 ALLOWED_EXTENSIONS = IngestDataConstants.ALLOWED_EXTENSIONS
 

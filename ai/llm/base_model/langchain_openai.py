@@ -9,7 +9,7 @@ import backoff
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
-from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import ConversationalRetrievalChain, RetrievalQA
 from langchain.chains.question_answering import load_qa_chain
 from langchain import LLMChain
 from langchain.retrievers import MergerRetriever
@@ -22,6 +22,7 @@ from ai.core.constants import LangChainOpenAIConstants, IngestDataConstants
 from ai.core.aws_service import AWSService
 from ai.llm.base_model.retrieval_chain import CustomConversationalRetrievalChain
 from ai.core.constants import IngestDataConstants
+from ai.llm.data_loader.vectorestore_retriever import CustomVectorStoreRetriever
 
 from config.config import Settings
  
@@ -59,18 +60,18 @@ class LangchainOpenAI:
         s3_client = AWSService()
         s3_client.download_from_s3(vectorstore_folder_path)
 
-    def get_chain(self) -> CustomConversationalRetrievalChain:
+    def get_chain(self) -> ConversationalRetrievalChain:
         prompt_title = "qaPrompt"
 
         docs_chain = load_qa_chain(self.llm_model, prompt=self.data_loader.prompts[prompt_title])
         return CustomConversationalRetrievalChain(
-            retriever=self.vectorstore.as_retriever()
-            if self.vectorstore_retriever is None
-            else self.vectorstore_retriever,
+            retriever=self.vectorstore_retriever,
             combine_docs_chain=docs_chain,
             question_generator=LLMChain(llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]),
             max_tokens_limit=3500,
             output_parser=self.output_parser,
+            return_source_documents=True,
+            return_generated_question=True,
         )
     
     @staticmethod
@@ -81,8 +82,18 @@ class LangchainOpenAI:
         try:
             embeddings = openai_embedding_with_backoff()
             vectorstore = Chroma(persist_directory=vectorstore_folder_path, embedding_function=embeddings)
+            vectorestore_retriever = CustomVectorStoreRetriever(
+                vectorstore=vectorstore,
+                search_type="similarity_score_threshold",
+                search_kwargs=vectorstore_search_kwargs,
+                metadata={"name": "help_center"},
+            )
+
+            final_vectorstore_retriever = MergerRetriever(
+                    retrievers=[vectorestore_retriever],
+                )
             
-            return vectorstore, vectorstore.as_retriever()
+            return vectorstore, final_vectorstore_retriever
         
         except Exception as e:
             raise HTTPException(status_code=500, detail="Error when loading vectorstore")
@@ -115,44 +126,6 @@ class LangchainOpenAI:
         except Exception as e:
             language = "English"
         return language
-    
-    def get_document_sources(
-        self, question: str, chat_history: list, relevant_threshold: float = 0.65, top_k: int = 4
-    ) -> list:
-        """Get document sources for question/answering."""
-        doc_sources = set()
-
-        search_result = self.get_relevant_documents(question, chat_history, top_k=top_k)
-
-        for document, score in search_result[:top_k]:
-            if score > relevant_threshold:
-                source_url = document.metadata.get("source", None)
-                doc_sources.add(source_url)
-
-        return list(doc_sources)
-    
-    def get_relevant_documents(self, question: str, chat_history: list, top_k: int = 4) -> list:
-        """Get document sources for question/answering."""
-        chat_history_str = self._get_chat_history_str(chat_history)
-        condense_question_prompt = self.data_loader.prompts["condensePrompt"].format(
-            question=question,
-            chat_history=chat_history_str,
-        )
-        condense_question = self.llm_model.generate([[HumanMessage(content=condense_question_prompt)]])
-        if condense_question:
-            condense_question = condense_question.generations[0][0].text.strip()
-
-        search_result = self.vectorstore.similarity_search_with_relevance_scores(query=condense_question)
-
-        return search_result[:top_k]
-    
-    def _get_chat_history_str(self, chat_history: list) -> str:
-        buffer = ""
-        for dialogue_turn in chat_history:
-            customer = f"Customer: {dialogue_turn[0]}"
-            ai = f"Agent: {dialogue_turn[1]}"
-            buffer += "\n" + "\n".join([customer, ai])
-        return buffer
     
     def _format_dict_list(self, dict_list: list[dict]):
         result = ""
