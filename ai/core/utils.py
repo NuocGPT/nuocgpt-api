@@ -95,3 +95,32 @@ def preprocess_chat_history(
         chat_history = chat_history[-max_recent_chat_history:]
 
     return chat_history, question, previous_response
+
+def check_hello(message):
+    lower_message = message.lower()
+    question_words = [
+        "who",
+        "what",
+        "when",
+        "where",
+        "why",
+        "how",
+        "is",
+        "are",
+        "can",
+        "could",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "should",
+        "may",
+        "might",
+    ]
+    if "hello" in lower_message.split() or "hi" in lower_message.split():
+        if not lower_message.endswith("?"):
+            if not any(lower_message.startswith(word) for word in question_words):
+                return True
+
+    return False
