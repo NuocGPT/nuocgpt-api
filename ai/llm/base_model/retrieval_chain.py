@@ -93,7 +93,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
 
             max_docs = max(len(docs[0]) for docs in retriever_docs)
             for i in range(max_docs):
-                for retriever, doc_with_score in zip(self.retriever.retrievers, retriever_docs):
+                for _, doc_with_score in zip(self.retriever.retrievers, retriever_docs):
                     if i < len(doc_with_score[0]):
                         merged_documents.append(doc_with_score[0][i][0])
                         merged_scores.append({"tag": doc_with_score[1], "score": doc_with_score[0][i][1]})
