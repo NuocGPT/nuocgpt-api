@@ -6,7 +6,7 @@ from api.auth.jwt_handler import sign_jwt
 from api.models.user import User
 from api.schemas.auth import *
 from config.constants import ErrorMessage
-from api.services.mail import send_otp
+from api.services.mail import send_otp, send_otp_forgot_password
 from api.utils.string import generateOTP
 from config.config import Settings
 
@@ -66,7 +66,7 @@ async def verify_otp(data: VerifyOTPDto = Body(...)):
     raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
 
 
-async def resend_verify_otp(data: ResendVerifyOTPDto = Body(...)):
+async def resend_verify_otp(data: SendVerifyOTPDto = Body(...)):
     user = await User.find_one(User.email == data.email)
     if not user:
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
@@ -74,4 +74,37 @@ async def resend_verify_otp(data: ResendVerifyOTPDto = Body(...)):
     verify_code = generateOTP(6)
     await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
     send_otp(user.email, verify_code)
+    return True
+
+
+async def send_email_forgot_password(data: SendVerifyOTPDto = Body(...)):
+    user = await User.find_one(User.email == data.email)
+    if user:
+        verify_code = generateOTP(6)
+        await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
+        send_otp_forgot_password(user.email, verify_code)
+    
+    return True
+
+
+async def verify_otp_forgot_password(data: VerifyOTPDto = Body(...)):
+    user = await User.find_one(User.email == data.email)
+    if not user:
+        raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
+
+    if user.verify_code == data.verify_code and user.verify_code_expire >= datetime.now():
+        verify_token = generateOTP(24)
+        await user.update({"$set": { "verify_token": verify_token }})
+        return {"verify_token": verify_token}
+
+    raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
+
+
+async def add_new_password(data: ForgotPasswordDto = Body(...)):
+    user = await User.find_one(User.verify_token == data.verify_token)
+    if not user or user.verify_code_expire <= datetime.now():
+        raise HTTPException(status_code=401, detail=ErrorMessage.TOKEN_INVALID_OR_EXPIRED)
+    
+    password = hash_helper.encrypt(data.password)
+    await user.update({"$set": { "password": password }})
     return True
