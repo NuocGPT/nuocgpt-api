@@ -8,5 +8,5 @@ condensePrompt:
   filepath: "configs/prompts/condense_prompt.yaml"
   createdDate: "2023/08/28"
 summarizePrompt:
-  filepath: "configs/prompts/simmarize_prompt.yaml"
+  filepath: "configs/prompts/summarize_prompt.yaml"
   createdDate: "2023/09/07"
