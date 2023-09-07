@@ -25,5 +25,20 @@ async def verify_otp_verification(data: VerifyOTPDto = Body(...)):
 
 
 @router.post("/resend-verify-otp")
-async def resend_verify_otp_verification(data: ResendVerifyOTPDto = Body(...)):
+async def resend_verify_otp_verification(data: SendVerifyOTPDto = Body(...)):
     return await resend_verify_otp(data)
+
+
+@router.post("/send-verify-otp-forgot-password")
+async def verify_forgot_password(data: SendVerifyOTPDto = Body(...)):
+    return await send_email_forgot_password(data)
+
+
+@router.post("/verify-otp-forgot-password")
+async def verify_fotgot_password(data: VerifyOTPDto = Body(...)):
+    return await verify_otp_forgot_password(data)
+
+
+@router.post("/new-password-forgot-password")
+async def add_new_password_data(data: ForgotPasswordDto = Body(...)):
+    return await add_new_password(data)

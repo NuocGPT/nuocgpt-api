@@ -39,3 +39,9 @@ def send_otp(email: str, verify_code: str):
     message = get_otp_message(verify_code)
     send_mail("OTP verification", email, message)
     return True
+
+
+def send_otp_forgot_password(email: str, verify_code: str):
+    message = get_otp_message(verify_code)
+    send_mail("Forgot Password", email, message)
+    return True

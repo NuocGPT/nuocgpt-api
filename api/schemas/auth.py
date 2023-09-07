@@ -40,7 +40,7 @@ class VerifyOTPDto(BaseModel):
         }
 
 
-class ResendVerifyOTPDto(BaseModel):
+class SendVerifyOTPDto(BaseModel):
     email: EmailStr
 
     class Config:
@@ -60,5 +60,18 @@ class Token(BaseModel):
             "example": {
                 "user_id": "0321b384-1e67-43b6-b723-3389b19a761e",
                 "expires": "1693900575"
+            }
+        }
+
+
+class ForgotPasswordDto(BaseModel):
+    verify_token: str
+    password: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "verify_token": "567345938456",
+                "password": "enosta@123",
             }
         }
