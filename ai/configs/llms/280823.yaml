@@ -2,5 +2,5 @@ _type: chat_openai
 max_tokens:
 model_name: gpt-3.5-turbo
 n: 1
-request_timeout: 30
+request_timeout: 600
 temperature: 0.15

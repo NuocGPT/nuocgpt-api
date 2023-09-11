@@ -78,7 +78,7 @@ class LangchainOpenAI:
     @staticmethod
     def get_langchain_retriever(vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None) -> Tuple[VectorStore, MergerRetriever]:
         if vectorstore_search_kwargs is None:
-            vectorstore_search_kwargs = {"k": 3, "score_threshold": 0.3}
+            vectorstore_search_kwargs = {"k": 5, "score_threshold": 0.3}
 
         try:
             embeddings = openai_embedding_with_backoff()
