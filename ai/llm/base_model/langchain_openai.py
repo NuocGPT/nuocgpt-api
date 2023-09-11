@@ -56,10 +56,11 @@ class LangchainOpenAI:
         )
 
         vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
-        self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
         s3_client = AWSService()
         s3_client.download_from_s3(vectorstore_folder_path)
 
+        self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
+        
     def get_chain(self) -> ConversationalRetrievalChain:
         prompt_title = "qaPrompt"
 
@@ -77,7 +78,7 @@ class LangchainOpenAI:
     @staticmethod
     def get_langchain_retriever(vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None) -> Tuple[VectorStore, MergerRetriever]:
         if vectorstore_search_kwargs is None:
-            vectorstore_search_kwargs = {"k": 3, "score_threshold": 0.3}
+            vectorstore_search_kwargs = {"k": 5, "score_threshold": 0.3}
 
         try:
             embeddings = openai_embedding_with_backoff()
@@ -126,6 +127,19 @@ class LangchainOpenAI:
         except Exception as e:
             language = "English"
         return language
+    
+    def summarize_question(self, question: str) -> str:
+        try:
+            summarize_prompt = self.data_loader.prompts.get("summarizePrompt").template.format(
+                question=question
+            )
+            summarization = (
+                self.llm_model.generate([[HumanMessage(content=summarize_prompt)]]).generations[0][0].text.strip()
+            )
+        except Exception as e:
+            summarization = "New Conversation"
+            raise HTTPException(status_code=500, detail="Error when loading summarization")
+        return summarization
     
     def _format_dict_list(self, dict_list: list[dict]):
         result = ""

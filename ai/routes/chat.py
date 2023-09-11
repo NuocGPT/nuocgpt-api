@@ -3,7 +3,7 @@ from langchain.callbacks import get_openai_callback
 
 from ai.schemas.schemas import QARequest
 from ai.llm.base_model.langchain_openai import LangchainOpenAI
-from ai.core.utils import preprocess_suggestion_request
+from ai.core.utils import preprocess_suggestion_request, check_hello
 
 
 async def chat(request: QARequest) -> str:
@@ -21,11 +21,18 @@ async def chat(request: QARequest) -> str:
     try:
         with get_openai_callback() as cb:
             chat_history = processed_request.get("chat_history")
+            if check_hello(question):
+                chat_history = ""
             response = qa_chain({
-                            "question": processed_request.get("question"),
+                            "question": question,
                             "chat_history": chat_history,
                         })
-            print(response)
+            logging.info(f"Response: {response}")
+            logging.info(
+                f"[Tokens used: {cb.total_tokens} "
+                f"(Prompt tokens: {cb.prompt_tokens}; "
+                f"Completion tokens: {cb.completion_tokens})"
+            )
             
     except Exception as e:
         logging.exception(e)

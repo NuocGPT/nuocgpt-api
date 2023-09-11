@@ -1,0 +1,18 @@
+_type: prompt
+input_variables:
+  [ "question" ]
+template: >
+  I want you to act as a professional summarizer, and based on the given message, write a concise yet comprehensive summary that captures the essence of the discussion.
+  Ensure that the summary is clear, coherent, and covers all the key points discussed in the question.
+  Use appropriate language and structure the summary in a logical manner to make it easy to understand for the intended audience.
+  The summary should be not too long, better less than 10 words. 
+  
+  ---
+  
+  Question: 
+  
+  "{question}"
+  
+  ---
+  
+  A short summary for the question:
