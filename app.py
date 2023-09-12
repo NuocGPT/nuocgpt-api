@@ -9,6 +9,7 @@ from api.routes.conversation import router as ConversationRouter
 from api.routes.feedback import router as FeedbackRouter
 from api.routes.auth import router as AuthRouter
 from api.routes.me import router as MeRouter
+from api.routes.admin import router as AdminRouter
 
 app = FastAPI(
     title="NướcGPT API Documentation",
@@ -53,6 +54,12 @@ app.include_router(
     MeRouter,
     tags=["Me"],
     prefix="/v1/me",
+    dependencies=[Depends(token_listener)]
+)
+app.include_router(
+    AdminRouter,
+    tags=["Admin"],
+    prefix="/v1/admin",
     dependencies=[Depends(token_listener)]
 )
 

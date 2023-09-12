@@ -3,7 +3,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
 from api.auth.jwt_handler import sign_jwt
-from api.models.user import User
+from api.models.user import RoleEnum, User
 from api.schemas.auth import *
 from config.constants import ErrorMessage
 from api.services.mail import send_otp, send_otp_forgot_password
@@ -25,7 +25,7 @@ async def user_signin(data: SignInDto = Body(...)):
 
         password = hash_helper.verify(data.password, user.password)
         if password:
-            return sign_jwt(str(user.id))
+            return {"access_token": sign_jwt(str(user.id)), "roles": user.roles}
 
         raise HTTPException(status_code=401, detail=ErrorMessage.INCORRECT_EMAIL_OR_PASSWORD)
 
@@ -44,6 +44,7 @@ async def user_signup(data: SignUpDto = Body(...)):
     new_user = User(
         email=data.email,
         password=data.password,
+        roles=[RoleEnum.user],
         verify_code=verify_code,
         verify_code_expire=datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES),
         created_at=datetime.now()
@@ -61,7 +62,7 @@ async def verify_otp(data: VerifyOTPDto = Body(...)):
 
     if user.verify_code == data.verify_code and user.verify_code_expire >= datetime.now():
         await user.update({"$set": { "is_verified": True }})
-        return sign_jwt(str(user.id))
+        return {"access_token": sign_jwt(str(user.id)), "roles": user.roles}
 
     raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
 
