@@ -48,3 +48,9 @@ async def retrieve_feedbacks(search: str, rating: RatingEnum) -> List[Feedback]:
 
     feedbacks = await Feedback.find(*search_criteria).sort("-created_at").to_list()
     return feedbacks
+
+
+async def count_ratings():
+    likes = await Feedback.find(Feedback.rating==RatingEnum.thumbs_up).count()
+    dis_likes = await Feedback.find(Feedback.rating==RatingEnum.thumbs_down).count()
+    return {"likes": likes, "dis_likes": dis_likes}

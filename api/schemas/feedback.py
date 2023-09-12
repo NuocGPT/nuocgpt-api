@@ -42,6 +42,6 @@ class UpdateFeedbackDto(BaseModel):
         }
 
 
-class SearchFeedbackDto():
-    question: FeedbackQuestion
-    message: FeedbackMessage
+class CountRatingResponse(BaseModel):
+    likes: int
+    dis_likes: int
