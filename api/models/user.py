@@ -1,3 +1,5 @@
+from enum import Enum
+from typing import List
 from uuid import UUID, uuid4
 from beanie import Document, Indexed
 from pydantic import EmailStr, Field
@@ -5,10 +7,17 @@ from datetime import datetime, timedelta
 
 from config.config import Settings
 
+
+class RoleEnum(str, Enum):
+    user = 'user'
+    admin = 'admin'
+
+
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
     email: Indexed(EmailStr, unique=True)
     password: str
+    roles: List[RoleEnum] = [RoleEnum.user]
     is_verified: bool = False
     verify_code: str = None
     verify_code_expire: datetime = datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES)

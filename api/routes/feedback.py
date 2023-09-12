@@ -4,9 +4,8 @@ from typing import Annotated, Union
 
 from api.auth.jwt_handler import get_user_id
 from api.models.feedback import Feedback
-from api.schemas.feedback import AddFeedbackDto
-from api.services.feedback import *
-
+from api.schemas.feedback import AddFeedbackDto, UpdateFeedbackDto
+from api.services.feedback import add_feedback, update_feedback_data
 
 router = APIRouter()
 
