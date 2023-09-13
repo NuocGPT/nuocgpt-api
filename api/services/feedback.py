@@ -15,7 +15,7 @@ async def add_feedback(user_id: UUID, data: AddFeedbackDto) -> Feedback:
     if message.question_id:
         question = await Message.get(message.question_id)
     else:
-        messages = await Message.find(Message.conversation_id==data.conversation.id).sort("-created_at").to_list()
+        messages = await Message.find(Message.conversation_id==data.conversation.id).sort("created_at").to_list()
         for idx, m in enumerate(messages):
             if str(m.id) == str(data.message.id):
                 question = messages[idx - 1]
