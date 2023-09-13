@@ -28,13 +28,14 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
         content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
         created_at=datetime.now()
     )
-    await user_message.create()
+    question = await user_message.create()
     answer = await chat(QARequest(messages=[{
         "role": "user",
         "content": data.message
     }]))
     system_message = Message(
         conversation_id=conversation.id,
+        question_id=question.id,
         author={"role": AuthorTypeEnum.system},
         content={"content_type": ContentTypeEnum.text, "parts": [answer]},
         created_at=datetime.now()
@@ -57,11 +58,12 @@ async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
         content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
         created_at=datetime.now()
     )
-    await user_message.create()
+    question = await user_message.create()
     messages = await Message.find(Message.conversation_id == id).sort("created_at").to_list()
     answer = await chat(QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages]))
     system_message = Message(
         conversation_id=id,
+        question_id=question.id,
         author={"role": AuthorTypeEnum.system},
         content={"content_type": ContentTypeEnum.text, "parts": [answer]},
         created_at=datetime.now()

@@ -29,6 +29,7 @@ class Content(BaseModel):
 class Message(Document):
     id: UUID = Field(default_factory=uuid4)
     conversation_id: UUID
+    question_id: Optional[UUID]
     author: Author
     content: Content
     created_at: datetime = datetime.now()
