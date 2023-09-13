@@ -11,11 +11,8 @@ from beanie.odm.operators.find.logical import Or
 
 async def add_feedback(user_id: UUID, data: AddFeedbackDto) -> Feedback:
     user = await User.get(user_id)
-    messages = await Message.find(Message.conversation_id==data.conversation.id).sort("-created_at").to_list()
-    for idx, m in enumerate(messages):
-        if m.id == data.message.id:
-            question = messages[idx - 1]
-            break
+    message = await Message.get(data.message.id)
+    question = await Message.get(message.question_id)
     new_feedback = Feedback(
         conversation=data.conversation,
         question=FeedbackQuestion(id=question.id, content=question.content.parts[0]),
