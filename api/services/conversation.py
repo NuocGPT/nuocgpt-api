@@ -7,6 +7,7 @@ from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
 from api.schemas.conversation import *
 from ai.routes.chat import chat
 from ai.schemas.schemas import QARequest
+from ai.routes.summarize import summarize
 
 
 async def retrieve_conversations(user_id: UUID) -> List[Conversation]:
@@ -86,4 +87,18 @@ async def update_conversation_data(id: UUID, data: dict) -> Union[bool, Conversa
     if conversation:
         await conversation.update(update_query)
         return conversation
+    return False
+
+
+async def summarize_question(question: str):
+    return await summarize(question)
+
+
+async def update_feedback_data(id: UUID, data: UpdateConversationDto) -> Union[bool, Conversation]:
+    des_body = {k: v for k, v in data.items() if v is not None}
+    update_query = {"$set": {field: value for field, value in des_body.items()}}
+    feedback = await Conversation.get(id)
+    if feedback:
+        await feedback.update(update_query)
+        return await Conversation.get(id)
     return False

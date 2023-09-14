@@ -2,6 +2,7 @@ from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel
 
+
 class AddConversationDto(BaseModel):
     title: Optional[str] = None
     message: str
@@ -19,6 +20,17 @@ class AddConversationDto(BaseModel):
                 ]
             }
         }
+
+class UpdateConversationDto(BaseModel):
+    title: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "Assist with user query."
+            }
+        }
+
 
 class AddMessageDto(BaseModel):
     message: str
