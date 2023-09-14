@@ -24,6 +24,11 @@ async def add_conversation_data(user_id: Annotated[dict, Depends(get_user_id)], 
     return await add_conversation(user_id, data)
 
 
+@router.put("/{id}", response_model=Union[bool, Conversation])
+async def update_conversation(id: UUID, req: UpdateConversationDto = Body(...)):
+    return await update_conversation_data(id, req.dict())
+
+
 @router.get("/{id}/messages", response_model=Page[Message])
 async def get_messages(id: UUID):
     messages = await retrieve_messages(id)
@@ -33,3 +38,8 @@ async def get_messages(id: UUID):
 @router.post("/{id}/messages", response_model=Message)
 async def add_message_data(user_id: Annotated[dict, Depends(get_user_id)], id: UUID, data: AddMessageDto = Body(...)):
     return await add_message(id, user_id, data)
+
+
+@router.get("/summarize-question")
+async def get_summarize_question(question: str):
+    return await summarize_question(question)
