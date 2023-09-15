@@ -40,6 +40,6 @@ async def add_message_data(user_id: Annotated[dict, Depends(get_user_id)], id: U
     return await add_message(id, user_id, data)
 
 
-@router.get("/summarize-question")
-async def get_summarize_question(question: str):
-    return await summarize_question(question)
+@router.get("/{id}/generate-title", response_model=Union[bool, Conversation])
+async def get_title(id: UUID):
+    return await summarize_question(id)
