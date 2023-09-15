@@ -90,8 +90,10 @@ async def update_conversation_data(id: UUID, data: dict) -> Union[bool, Conversa
     return False
 
 
-async def summarize_question(question: str):
-    return await summarize(question)
+async def summarize_question(id: UUID) -> Union[bool, Conversation]:
+    messages = await Message.find(Message.conversation_id==id).sort("created_at").to_list()
+    title = await summarize(messages[0].content.parts[0])
+    return await update_conversation_data(id, { "title": title })
 
 
 async def update_feedback_data(id: UUID, data: UpdateConversationDto) -> Union[bool, Conversation]:
