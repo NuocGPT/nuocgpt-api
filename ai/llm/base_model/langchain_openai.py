@@ -16,6 +16,7 @@ from langchain.retrievers import MergerRetriever
 from langchain.vectorstores import Chroma
 from langchain.vectorstores.base import VectorStore
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.callbacks.manager import AsyncCallbackManager
 
 from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
 from ai.core.constants import LangChainOpenAIConstants, IngestDataConstants
@@ -73,8 +74,31 @@ class LangchainOpenAI:
             output_parser=self.output_parser,
             return_source_documents=True,
             return_generated_question=True,
+            is_chat = True
         )
     
+    def get_stream_chain(self, stream_handler) -> ConversationalRetrievalChain:
+        callback_manager = AsyncCallbackManager([])
+        stream_manager = AsyncCallbackManager([stream_handler])
+
+        prompt_title = "qaPrompt"
+        llm = self.llm_cls(temperature=0, streaming=True, callback_manager=stream_manager)
+        docs_chain = load_qa_chain(llm, prompt=self.data_loader.prompts[prompt_title])
+
+
+        return CustomConversationalRetrievalChain(
+            retriever=self.vectorstore_retriever,
+            combine_docs_chain=docs_chain,
+            question_generator=LLMChain(llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]),
+            callback_manager=callback_manager,
+            max_tokens_limit=3500,
+            output_parser=self.output_parser,
+            return_source_documents=True,
+            return_generated_question=True,
+            is_chat = True
+        )
+
+
     @staticmethod
     def get_langchain_retriever(vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None) -> Tuple[VectorStore, MergerRetriever]:
         if vectorstore_search_kwargs is None:
