@@ -1,7 +1,7 @@
 import logging
 from langchain.callbacks import get_openai_callback
-from callback.handler.stream_llm import StreamingLLMCallbackHandler
 
+from ai.callback.handler.stream_llm import StreamingLLMCallbackHandler
 from ai.schemas.schemas import QARequest
 from ai.llm.base_model.langchain_openai import LangchainOpenAI
 from ai.core.utils import preprocess_suggestion_request, check_hello
