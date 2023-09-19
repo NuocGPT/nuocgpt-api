@@ -155,8 +155,10 @@ class LangchainOpenAI:
     def summarize_question(self, question: str) -> str:
         try:
             summarize_prompt = self.data_loader.prompts.get("summarizePrompt").template.format(
-                question=question
+                question=question,
+                lang=self.lang
             )
+
             summarization = (
                 self.llm_model.generate([[HumanMessage(content=summarize_prompt)]]).generations[0][0].text.strip()
             )
