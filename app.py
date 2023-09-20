@@ -4,6 +4,7 @@ from fastapi_paginate import add_pagination
 
 from api.auth.jwt_bearer import JWTBearer
 from api.database import initiate_database
+from ai.core.aws_service import AWSService
 
 from api.routes.conversation import router as ConversationRouter
 from api.routes.feedback import router as FeedbackRouter
@@ -31,6 +32,10 @@ app.add_middleware(
 @app.on_event("startup")
 async def start_database():
     await initiate_database()
+
+
+s3_client = AWSService()
+s3_client.download_from_s3()
 
 
 @app.get("/", tags=["Root"])
