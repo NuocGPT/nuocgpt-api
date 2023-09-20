@@ -55,7 +55,7 @@ class LangchainOpenAI:
             language=self.lang
         )
 
-        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
+        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"JSON/")
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
         
