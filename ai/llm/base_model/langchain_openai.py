@@ -56,8 +56,6 @@ class LangchainOpenAI:
         )
 
         vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
-        s3_client = AWSService()
-        s3_client.download_from_s3(vectorstore_folder_path)
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
         

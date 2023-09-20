@@ -26,7 +26,7 @@ class DataIngestor:
             if not os.path.exists(vectorstore_path):
                 os.makedirs(vectorstore_path)
             s3_client = AWSService()
-            s3_client.download_from_s3(vectorstore_path)
+            s3_client.download_from_s3()
         except Exception as e:
             logging.exception(e)
         finally:
