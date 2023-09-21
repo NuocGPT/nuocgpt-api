@@ -1,6 +1,6 @@
 _type: chat_openai
 max_tokens:
-model_name: gpt-3.5-turbo
+model_name: ft:gpt-3.5-turbo-0613:fulbright-university-vietnam::80QNraso
 n: 1
 request_timeout: 600
 temperature: 0
