@@ -100,6 +100,12 @@ async def update_conversation_data(id: UUID, data: dict) -> Union[bool, Conversa
     return False
 
 
+async def delete_conversation_data(id: UUID) -> Union[bool, Conversation]:
+    await Message.find(Message.conversation_id == id).delete()
+    await Conversation.find_one(Conversation.id == id).delete()
+    return True
+
+
 async def summarize_question(id: UUID) -> Union[bool, Conversation]:
     messages = await Message.find(Message.conversation_id==id).sort("created_at").to_list()
     title = await summarize(messages[0].content.parts[0])

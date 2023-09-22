@@ -29,6 +29,11 @@ async def update_conversation(id: UUID, req: UpdateConversationDto = Body(...)):
     return await update_conversation_data(id, req.dict())
 
 
+@router.delete("/{id}", response_model=Union[bool, Conversation])
+async def delete_conversation(id: UUID):
+    return await delete_conversation_data(id)
+
+
 @router.get("/{id}/messages", response_model=Page[Message])
 async def get_messages(id: UUID):
     messages = await retrieve_messages(id)
