@@ -1,11 +1,13 @@
 import logging
 from langchain.callbacks import get_openai_callback
+from langdetect import detect
 
 from ai.callback.handler.stream_llm import StreamingLLMCallbackHandler
 from ai.schemas.schemas import QARequest
 from ai.llm.base_model.langchain_openai import LangchainOpenAI
 from ai.core.utils import preprocess_suggestion_request, check_hello
 from ai.responses.stream_llm import ConversationalRetrievalStreamingResponse
+from config.constants import ErrorChatMessage
 
 
 async def chat(request: QARequest) -> str:
@@ -38,7 +40,9 @@ async def chat(request: QARequest) -> str:
             
     except Exception as e:
         logging.exception(e)
-        return {"success": False, "msg": f"{str(e)}"}
+        lang = detect(question)
+        answer = ErrorChatMessage.VI if lang == "vi" else ErrorChatMessage.EN
+        return answer
 
     return response["answer"]
 

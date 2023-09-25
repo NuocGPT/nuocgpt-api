@@ -1,6 +1,7 @@
 from typing import List, Union
 from uuid import UUID
 from datetime import datetime
+from langdetect import detect
 
 from api.models.conversation import Conversation
 from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
@@ -8,6 +9,7 @@ from api.schemas.conversation import *
 from ai.routes.chat import chat
 from ai.schemas.schemas import QARequest
 from ai.routes.summarize import summarize
+from config.constants import irrelevant_keywords, IrrelevantMessage
 
 
 async def retrieve_conversations(user_id: UUID) -> List[Conversation]:
@@ -30,10 +32,14 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
         created_at=datetime.now()
     )
     question = await user_message.create()
-    answer = await chat(QARequest(messages=[{
-        "role": "user",
-        "content": data.message
-    }]))
+    if any(substring.lower() in data.message.lower() for substring in irrelevant_keywords):
+        lang = detect(data.message)
+        answer = IrrelevantMessage.VI if lang == "vi" else IrrelevantMessage.EN
+    else:
+        answer = await chat(QARequest(messages=[{
+            "role": "user",
+            "content": data.message
+        }]))
     system_message = Message(
         conversation_id=conversation.id,
         question_id=question.id,
@@ -61,7 +67,11 @@ async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
     )
     question = await user_message.create()
     messages = await Message.find(Message.conversation_id == id).sort("created_at").to_list()
-    answer = await chat(QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages]))
+    if any(substring.lower() in data.message.lower() for substring in irrelevant_keywords):
+        lang = detect(data.message)
+        answer = IrrelevantMessage.VI if lang == "vi" else IrrelevantMessage.EN
+    else:
+        answer = await chat(QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages]))
     system_message = Message(
         conversation_id=id,
         question_id=question.id,
@@ -88,6 +98,12 @@ async def update_conversation_data(id: UUID, data: dict) -> Union[bool, Conversa
         await conversation.update(update_query)
         return conversation
     return False
+
+
+async def delete_conversation_data(id: UUID) -> Union[bool, Conversation]:
+    await Message.find(Message.conversation_id == id).delete()
+    await Conversation.find_one(Conversation.id == id).delete()
+    return True
 
 
 async def summarize_question(id: UUID) -> Union[bool, Conversation]:
