@@ -71,8 +71,7 @@ class LangchainOpenAI:
             max_tokens_limit=3500,
             output_parser=self.output_parser,
             return_source_documents=True,
-            return_generated_question=True,
-            is_chat = True
+            return_generated_question=True
         )
     
     def get_stream_chain(self, stream_handler) -> ConversationalRetrievalChain:
@@ -92,8 +91,7 @@ class LangchainOpenAI:
             max_tokens_limit=3500,
             output_parser=self.output_parser,
             return_source_documents=True,
-            return_generated_question=True,
-            is_chat = True
+            return_generated_question=True
         )
 
 
