@@ -33,10 +33,10 @@ class LangChainDataLoader:
         language: str,
         metadata: str
     ):
-        for prompt_title in ["qaPrompt"]:
+        for prompt_title in ["qaPrompt", "qaWithoutDocsPrompt"]:
             qa_template = self.prompts[prompt_title].template
             qa_template += (
-                        f"Based on the conversation chat history and the new request of customer, "
+                        f"Based on the conversation chat history and the new question of customer, "
                         f"write a helpful response in {language} language"
                     )
 

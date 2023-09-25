@@ -43,3 +43,30 @@ async def chat(request: QARequest) -> str:
         return answer
 
     return response["answer"]
+
+
+async def chat(request: QARequest) -> str:
+    processed_request = preprocess_suggestion_request(request)
+
+    question=processed_request.get("question")
+    language = processed_request.get("language")
+
+    chat_history = processed_request.get("chat_history")
+
+    chain = LangchainOpenAI(question=question, metadata=processed_request.get("metadata"),
+        language = language)
+
+    try:
+        qa_prompt = chain.data_loader.prompts.get("qaWithoutDocsPrompt").template.format(
+            question=question,
+            lang=chain.lang
+        )
+
+        summarization = (
+            chain.llm_model.generate([[HumanMessage(content=qa_prompt)]]).generations[0][0].text.strip()
+        )
+    except Exception as e:
+        summarization = "New Conversation"
+        raise HTTPException(status_code=500, detail="Error when loading summarization")
+    return summarization
+
