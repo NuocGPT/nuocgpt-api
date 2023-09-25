@@ -31,7 +31,8 @@ class LangChainDataLoader:
     def preprocessing_qa_prompt(
         self,
         language: str,
-        metadata: str
+        metadata: str,
+        chat_history = None,
     ):
         for prompt_title in ["qaPrompt", "qaWithoutDocsPrompt"]:
             qa_template = self.prompts[prompt_title].template
@@ -42,9 +43,16 @@ class LangChainDataLoader:
 
             qa_template += "\nResponse:\n\n"
 
-            qa_template = qa_template.format(
+            if prompt_title == "qaPrompt":
+                qa_template = qa_template.format(
                 metadata=metadata,
                 context="{context}",
                 question="{question}",
-            )
-            self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["context", "question"])
+                )
+                self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["context", "question"])
+            else:
+                qa_template = qa_template.format(
+                chat_history = chat_history,
+                question="{question}",
+                )
+                self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["question"])
