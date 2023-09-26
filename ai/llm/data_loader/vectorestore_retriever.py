@@ -57,3 +57,27 @@ class CustomVectorStoreRetriever(BaseRetriever):
             raise ValueError(f"search_type of {self.search_type} not allowed.")
 
         return docs_with_scores
+    
+    async def _aget_relevant_documents(self, query: str, *, run_manager: AsyncCallbackManagerForRetrieverRun) -> List:
+        if self.search_type == "similarity":
+            func = partial(self.vectorstore.similarity_search_with_score, query, **self.search_kwargs)
+            docs_with_scores = await asyncio.get_event_loop().run_in_executor(None, func)
+        elif self.search_type == "similarity_score_threshold":
+            func = partial(
+                self.vectorstore.similarity_search_with_relevance_scores,
+                query,
+                **self.search_kwargs,
+            )
+
+            docs_with_scores = await asyncio.get_event_loop().run_in_executor(None, func)
+        elif self.search_type == "mmr":
+            embedding = self.vectorstore._embedding_function.embed_query(query)
+            func = partial(
+                self.vectorstore.max_marginal_relevance_search_with_score_by_vector,
+                embedding,
+                **self.search_kwargs,
+            )
+            docs_with_scores = await asyncio.get_event_loop().run_in_executor(None, func)
+        else:
+            raise ValueError(f"search_type of {self.search_type} not allowed.")
+        return docs_with_scores
