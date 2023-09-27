@@ -13,7 +13,7 @@ from langchain.chains import ConversationalRetrievalChain, RetrievalQA
 from langchain.chains.question_answering import load_qa_chain
 from langchain import LLMChain
 from langchain.retrievers import MergerRetriever
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import FAISS
 from langchain.vectorstores.base import VectorStore
 from langchain.embeddings.openai import OpenAIEmbeddings
 
@@ -55,7 +55,7 @@ class LangchainOpenAI:
             language=self.lang
         )
 
-        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"JSON/")
+        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER)
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
         
@@ -80,7 +80,7 @@ class LangchainOpenAI:
 
         try:
             embeddings = openai_embedding_with_backoff()
-            vectorstore = Chroma(persist_directory=vectorstore_folder_path, embedding_function=embeddings)
+            vectorstore = FAISS.load_local(folder_path=vectorstore_folder_path, embeddings=embeddings)
             vectorestore_retriever = CustomVectorStoreRetriever(
                 vectorstore=vectorstore,
                 search_type="similarity_score_threshold",
