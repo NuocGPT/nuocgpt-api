@@ -39,7 +39,6 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str
         answer = self.combine_docs_chain.run(input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs)
-
         output: Dict[str, Any] = {self.output_key: answer, "scores": scores}
         if self.return_source_documents:
             output["source_documents"] = docs

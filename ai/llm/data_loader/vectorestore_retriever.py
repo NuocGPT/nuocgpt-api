@@ -49,7 +49,7 @@ class CustomVectorStoreRetriever(BaseRetriever):
             docs_with_scores = self.vectorstore.similarity_search_with_relevance_scores(query, **self.search_kwargs)
 
         elif self.search_type == "mmr":
-            embedding = self.vectorstore._embedding_function.embed_query(query)
+            embedding = self.vectorstore.embed_query(query)
             docs_with_scores = self.vectorstore.max_marginal_relevance_search_with_score_by_vector(
                 embedding, **self.search_kwargs
             )

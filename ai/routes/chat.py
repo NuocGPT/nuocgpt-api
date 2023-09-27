@@ -13,7 +13,6 @@ async def chat(request: QARequest) -> str:
 
     question=processed_request.get("question")
     language = processed_request.get("language")
-
     qa_chain =  LangchainOpenAI(
         question=question,
         metadata=processed_request.get("metadata"),
