@@ -39,6 +39,7 @@ class LangchainOpenAI:
         question,
         language: str = None,
         metadata: list[dict] = None,
+        chat_history = None
     ):
         self.output_parser = None
         self.is_chat_model, self.llm_cls, self.llm_model = self.load_llm_model()
@@ -52,7 +53,8 @@ class LangchainOpenAI:
 
         self.data_loader.preprocessing_qa_prompt(
             metadata=self._format_dict_list(metadata or []),
-            language=self.lang
+            language=self.lang,
+            chat_history = chat_history
         )
 
         vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER)

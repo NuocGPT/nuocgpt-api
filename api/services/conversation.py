@@ -3,10 +3,11 @@ from uuid import UUID
 from datetime import datetime
 from langdetect import detect
 
+from api.models.user import User, RoleEnum
 from api.models.conversation import Conversation
 from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
 from api.schemas.conversation import *
-from ai.routes.chat import chat
+from ai.routes.chat import chat, chat_without_docs
 from ai.schemas.schemas import QARequest
 from ai.routes.summarize import summarize
 from config.constants import irrelevant_keywords, IrrelevantMessage
@@ -36,10 +37,9 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
         lang = detect(data.message)
         answer = IrrelevantMessage.VI if lang == "vi" else IrrelevantMessage.EN
     else:
-        answer = await chat(QARequest(messages=[{
-            "role": "user",
-            "content": data.message
-        }]))
+        user = await User.get(user_id)
+        body = QARequest(messages=[{ "role": "user", "content": data.message }])
+        answer = await chat_without_docs(body) if RoleEnum.admin in user.roles else await chat(body)
     system_message = Message(
         conversation_id=conversation.id,
         question_id=question.id,
@@ -71,7 +71,9 @@ async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
         lang = detect(data.message)
         answer = IrrelevantMessage.VI if lang == "vi" else IrrelevantMessage.EN
     else:
-        answer = await chat(QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages]))
+        user = await User.get(user_id)
+        body = QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages])
+        answer = await chat_without_docs(body) if RoleEnum.admin in user.roles else await chat(body)
     system_message = Message(
         conversation_id=id,
         question_id=question.id,
