@@ -61,10 +61,13 @@ class LangchainOpenAI:
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
         
-    def get_chain(self) -> ConversationalRetrievalChain:
-        prompt_title = "qaPrompt"
+    def get_chain(self, is_hello: bool) -> ConversationalRetrievalChain:
+        prompt_title = "helloPrompt" if is_hello else "qaPrompt"
 
-        docs_chain = load_qa_chain(self.llm_model, prompt=self.data_loader.prompts[prompt_title])
+        if is_hello:
+            return LLMChain(llm=self.llm_model, prompt=self.data_loader.prompts[prompt_title])
+        else:
+            docs_chain = load_qa_chain(self.llm_model, prompt=self.data_loader.prompts[prompt_title])
         return CustomConversationalRetrievalChain(
             retriever=self.vectorstore_retriever,
             combine_docs_chain=docs_chain,

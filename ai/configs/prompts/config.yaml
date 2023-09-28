@@ -13,3 +13,6 @@ summarizePrompt:
 qaWithoutDocsPrompt:
   filepath: "configs/prompts/qa_without_docs_prompt.yaml"
   createdDate: "2023/09/25"
+helloPrompt:
+  filepath: "configs/prompts/hello_prompt.yaml"
+  createdDate: "2023/09/28"

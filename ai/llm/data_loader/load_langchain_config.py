@@ -45,14 +45,14 @@ class LangChainDataLoader:
 
             if prompt_title == "qaPrompt":
                 qa_template = qa_template.format(
-                metadata=metadata,
-                context="{context}",
-                question="{question}",
-                )
+                                    metadata=metadata,
+                                    context="{context}",
+                                    question="{question}",
+                                )
                 self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["context", "question"])
             else:
                 qa_template = qa_template.format(
-                chat_history = chat_history,
-                question="{question}",
-                )
+                                    chat_history = chat_history,
+                                    question="{question}",
+                                )
                 self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["question"])
