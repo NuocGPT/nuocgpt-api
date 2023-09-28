@@ -16,20 +16,25 @@ async def chat(request: QARequest) -> str:
 
     question=processed_request.get("question")
     language = processed_request.get("language")
-    qa_chain =  LangchainOpenAI(
+
+    chain = LangchainOpenAI(
         question=question,
         metadata=processed_request.get("metadata"),
         language = language
-    ).get_chain()
+    )
 
     try:
         with get_openai_callback() as cb:
             chat_history = processed_request.get("chat_history")
             if check_hello(question):
                 chat_history = ""
+                qa_chain =  chain.get_chain(True)
+                return qa_chain.generate([{"message": question}]).generations[0][0].text.strip()
+            
+            qa_chain = chain.get_chain(False)
             response = qa_chain({
                             "question": question,
-                            "chat_history": chat_history,
+                            "chat_history": chat_history                  
                         })
             logging.info(f"Response: {response}")
             logging.info(
@@ -43,7 +48,6 @@ async def chat(request: QARequest) -> str:
         lang = detect(question)
         answer = ErrorChatMessage.VI if lang == "vi" else ErrorChatMessage.EN
         return answer
-
     return response["answer"]
 
 
@@ -58,6 +62,10 @@ async def chat_without_docs(request: QARequest) -> str:
     chain = LangchainOpenAI(question=question, metadata=processed_request.get("metadata"),
         language = language, chat_history= chat_history)
     
+    if check_hello(question):
+        chat_history = ""
+        qa_chain = chain.get_chain(True)
+        return qa_chain.generate([{"message": question}]).generations[0][0].text.strip()
 
     try:
         qa_prompt = chain.data_loader.prompts.get("qaWithoutDocsPrompt")
