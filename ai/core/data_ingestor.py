@@ -1,36 +1,38 @@
 import logging
 import os
+import time
 
 
-from typing import List, Text
+from typing import List, Text, Tuple
 
-from langchain.document_loaders import PyPDFium2Loader
+from langchain.document_loaders import PyPDFium2Loader, UnstructuredFileLoader, UnstructuredExcelLoader, CSVLoader
 from langchain.text_splitter import TokenTextSplitter
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import FAISS
 
 from llama_index import download_loader
 
-from core.constants import IngestDataConstants
-from core.aws_service import AWSService
-from core.utils import openai_embedding_with_backoff
+from ai.core.constants import IngestDataConstants
+from ai.llm.base_model.langchain_openai import openai_embedding_with_backoff
 
 class DataIngestor:
     """Ingest data with different format to create vectorstore"""
     def __init__(self, lang: str = ""):
         self.lang = lang
+        self.vectorstore_path = IngestDataConstants.TEMP_DB_FOLDER
+        self.sensor_data_lib_path = os.path.join(self.vectorstore_path, "sensor_data_lib")
 
-    def create_vectorstore(self) -> Text:
-        vectorstore_path = ""
+    def create_vectorstore(self) -> Tuple[Text, Text]:
         try:
-            vectorstore_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, f"{self.lang}/")
-            if not os.path.exists(vectorstore_path):
-                os.makedirs(vectorstore_path)
-            s3_client = AWSService()
-            s3_client.download_from_s3()
+            if not os.path.exists(self.vectorstore_path):
+                os.makedirs(self.vectorstore_path)
+           
+            if not os.path.exists(self.sensor_data_lib_path):
+                    os.makedirs(self.sensor_data_lib_path)
+
         except Exception as e:
             logging.exception(e)
         finally:
-            return vectorstore_path
+            return self.vectorstore_path, self.sensor_data_lib_path
         
     def _save_vectorstore(self, raw_documents: List, vectorstore_path: Text):
         text_splitter = TokenTextSplitter(
@@ -42,36 +44,66 @@ class DataIngestor:
         splitted_documents = text_splitter.split_documents(raw_documents)
         embeddings = openai_embedding_with_backoff()
 
-        vectorstore = Chroma(persist_directory=vectorstore_path, embedding_function=embeddings)
-        vectorstore.add_documents(splitted_documents)
-        vectorstore.persist()
-
-        s3_client = AWSService()
-        s3_client.upload_to_s3(vectorstore_path)
+        if os.path.exists(f"{vectorstore_path}/index.faiss"):
+            vectorstore = FAISS.load_local(vectorstore_path, embeddings=embeddings)
+            vectorstore.add_documents(splitted_documents)
+        else:
+            texts = [doc.page_content for doc in splitted_documents]
+            vectorstore = FAISS.from_texts(texts, embeddings)
+        
+        vectorstore.save_local(vectorstore_path)
+        time.sleep(60)
         
     def ingest_pdf(self, pdf_path: Text):
-        vectorstore_path = self.create_vectorstore()
+        vectorstore_path = self.create_vectorstore()[0]
 
         loader = PyPDFium2Loader(pdf_path)
         raw_documents = loader.load()
 
-        num_of_pages = 0
-        text_length = 0
-        if len(raw_documents) > 0:
-            num_of_pages = raw_documents[-1].metadata["page"] + 1
-            for doc in raw_documents:
-                text_length += len(doc.page_content)
-
         self._save_vectorstore(raw_documents, vectorstore_path)
 
-        return {"num_of_pages": num_of_pages, "text_length": text_length}
     
     def ingest_json(self, json_path: list):
-        vectorstore_path = self.create_vectorstore()
+        vectorstore_path = self.create_vectorstore()[0]
 
         JSONReader = download_loader("JSONReader")
         loader = JSONReader()
         documents = loader.load_data(json_path)
-        raw_documents = [d.to_langchain_format() for d in documents]
+        langchain_documents = [d.to_langchain_format() for d in documents]
+
+        self._save_vectorstore(langchain_documents, vectorstore_path)
+
+    def ingest_excel(self, xlsx_path: str):
+        vectorstore_path = self.create_vectorstore()[0]
+
+        loader = UnstructuredExcelLoader(xlsx_path, mode="elements")
+        raw_documents = loader.load()
+
+        self._save_vectorstore(raw_documents, vectorstore_path)
+
+    def ingest_csv(self, file_path: os.PathLike):
+        vectorstore_path = self.create_vectorstore()[0]
+
+        loader = CSVLoader(file_path)
+        raw_documents = loader.load()
+
+        self._save_vectorstore(raw_documents, vectorstore_path)
+
+    def load_sensor_data_question(self, plain_text: Text, id: str):
+        vectorstore_path = self.create_vectorstore()[1]
+        print(vectorstore_path)
+        txt_path = os.path.join(vectorstore_path, f"{id}", "content.txt")
+
+        os.makedirs(os.path.dirname(txt_path), exist_ok=True)
+        with open(txt_path, "w", encoding="utf8") as fi:
+            fi.write(plain_text)
+
+        self.ingest_sensor_data_question(txt_path)
+
+    def ingest_sensor_data_question(self, txt_path: Text):
+        vectorstore_path = self.create_vectorstore()[1]
+
+        loader = UnstructuredFileLoader(txt_path)
+        raw_documents = loader.load()
 
         self._save_vectorstore(raw_documents, vectorstore_path)

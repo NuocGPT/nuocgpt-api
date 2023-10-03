@@ -1,14 +1,14 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
 from config.config import Settings
 
 import os
 
-from schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest
-from core.data_ingestor import DataIngestor
-from core.constants import IngestDataConstants
+from ai.schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest, ImportSensorDataRequest
+from ai.core.data_ingestor import DataIngestor
+from ai.core.constants import IngestDataConstants
 
 OPENAI_API_KEY = Settings().OPENAI_API_KEY
 MAX_FILE_SIZE = IngestDataConstants.MAX_FILE_SIZE
@@ -69,3 +69,24 @@ async def import_multi_files(
         return JSONResponse(status_code=500, content={"errorCode": 500, "errorMessage": e})
     
     return JSONResponse(status_code=200, content={"Add Document To VectorDB Successfully!"})
+
+@router.post("/import-sensor-data-question")
+async def import_sensor_data_question(question: str, id: str):
+    data_ingestor = DataIngestor()
+    try:
+        data_ingestor.load_sensor_data_question(question, id)
+    except Exception as e:
+        logging.error(e)
+
+@router.post("/import-sensor-data-lib")
+async def import_sensor_data_lib(request: ImportSensorDataRequest=Body(...)):
+    try:
+        questions = request.questions
+
+        for question in questions:  
+            await import_sensor_data_question(question["question"], question["id"])
+
+        return {"Status": "OK"}
+   
+    except Exception as e:
+        logging.error(e)

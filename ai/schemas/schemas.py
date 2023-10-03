@@ -30,3 +30,16 @@ class QARequest(BaseModel):
     messages: list = Body(None, description="List of chat history")
     language:  Optional[str] = Body(None, description="Language of expected response")
     metadata: Optional[list] = Body([], description="List of metadata")
+
+
+class ImportSensorDataRequest(BaseModel):
+    """
+    Data format:
+    "questions": [
+        {
+            "id": "1",
+            "question": "question 1"
+        }
+    ]
+    """
+    questions: list = Body(None, description="list of questions with ids")
