@@ -1,9 +1,13 @@
 import csv 
 from ai.schemas.db_model import SensorDataLib
 import datetime
+from ai.core.aws_service import AWSService
 
 async def db_builder():
-    with open('sensordata.csv', 'r', encoding='utf-8') as file:
+    aws = AWSService()
+    aws.download_from_s3()
+    
+    with open('tmp/sensordata.csv', 'r', encoding='utf-8') as file:
         csvreader = csv.reader(file)
         for row in csvreader:
             try:
