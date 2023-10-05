@@ -86,7 +86,8 @@ async def import_data():
             for row in csvreader:
                 data.append({"id": row[0], "question": row[1]})
 
-        for question in data:
+        for idx, question in enumerate(data):
+            print("INDEX", idx)
             await import_sensor_data_question(question["question"], question["id"])
         print("DONE")
     except Exception as e:
