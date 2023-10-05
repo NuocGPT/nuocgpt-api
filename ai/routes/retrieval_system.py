@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from config.config import Settings
@@ -78,15 +78,15 @@ async def import_sensor_data_question(question: str, id: str):
     except Exception as e:
         logging.error(e)
 
-@router.post("/import-sensor-data-lib")
-async def import_sensor_data_lib(request: ImportSensorDataRequest=Body(...)):
+async def import_data(questions):
     try:
-        questions = request.questions
-
         for question in questions:  
             await import_sensor_data_question(question["question"], question["id"])
-
-        return {"Status": "OK"}
-   
     except Exception as e:
         logging.error(e)
+
+@router.post("/import-sensor-data-lib")
+async def import_sensor_data_lib(request: ImportSensorDataRequest=Body(...), background_tasks: BackgroundTasks=BackgroundTasks()):
+    questions = request.questions
+    background_tasks.add_task(import_data, questions)
+    return {"status": True}
