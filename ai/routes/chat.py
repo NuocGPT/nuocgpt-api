@@ -44,7 +44,7 @@ async def chat(request: QARequest) -> str:
     try:
         with get_openai_callback() as cb:
             chat_history = processed_request.get("chat_history")
-            if chain.relevant_answer != "" and chain.score >= 0.9:
+            if chain.relevant_answer != "" and chain.score >= 0.8:
                 output: Dict[str, Any] = {"answer": chain.relevant_answer, "score": chain.score}
                 if chain.output_parser:
                     output.update({"answer": chain.output_parser.parse(output["answer"])})
