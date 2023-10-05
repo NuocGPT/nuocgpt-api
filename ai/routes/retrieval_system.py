@@ -3,9 +3,9 @@ from fastapi import APIRouter, Body, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from config.config import Settings
-
+import csv
 import os
-
+import asyncio
 from ai.schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest, ImportSensorDataRequest
 from ai.core.data_ingestor import DataIngestor
 from ai.core.constants import IngestDataConstants
@@ -78,15 +78,24 @@ async def import_sensor_data_question(question: str, id: str):
     except Exception as e:
         logging.error(e)
 
-async def import_data(questions):
+async def import_data():
     try:
-        for question in questions:  
+        with open('/tmp/sensordata.csv', 'r', encoding='utf-8') as file:
+            csvreader = csv.reader(file)
+            data = []
+            for row in csvreader:
+                data.append({"id": row[0], "question": row[1]})
+
+        for question in data:
             await import_sensor_data_question(question["question"], question["id"])
+        print("DONE")
     except Exception as e:
         logging.error(e)
 
+def add_data():
+    asyncio.run(import_data())
+
 @router.post("/import-sensor-data-lib")
-async def import_sensor_data_lib(request: ImportSensorDataRequest=Body(...), background_tasks: BackgroundTasks=BackgroundTasks()):
-    questions = request.questions
-    background_tasks.add_task(import_data, questions)
+async def import_sensor_data_lib(background_tasks: BackgroundTasks=BackgroundTasks()):
+    background_tasks.add_task(add_data)
     return {"status": True}
