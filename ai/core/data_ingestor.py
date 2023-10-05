@@ -34,7 +34,7 @@ class DataIngestor:
         finally:
             return self.vectorstore_path, self.sensor_data_lib_path
         
-    def _save_vectorstore(self, raw_documents: List, vectorstore_path: Text):
+    def _save_vectorstore(self, raw_documents: List, vectorstore_path: Text, id: str = None):
         text_splitter = TokenTextSplitter(
             model_name="gpt-3.5-turbo",
             chunk_size=IngestDataConstants.CHUNK_SIZE,
@@ -46,10 +46,16 @@ class DataIngestor:
 
         if os.path.exists(f"{vectorstore_path}/index.faiss"):
             vectorstore = FAISS.load_local(vectorstore_path, embeddings=embeddings)
-            vectorstore.add_documents(splitted_documents)
+            if id:
+                vectorstore.add_documents(splitted_documents, ids=[id])
+            else:
+                vectorstore.add_documents(splitted_documents)
         else:
             texts = [doc.page_content for doc in splitted_documents]
-            vectorstore = FAISS.from_texts(texts, embeddings)
+            if id:
+                vectorstore = FAISS.from_texts(texts, embeddings, ids=[id])
+            else:
+                vectorstore = FAISS.from_texts(texts, embeddings)
         
         vectorstore.save_local(vectorstore_path)
         time.sleep(60)
@@ -98,12 +104,12 @@ class DataIngestor:
         with open(txt_path, "w", encoding="utf8") as fi:
             fi.write(plain_text)
 
-        self.ingest_sensor_data_question(txt_path)
+        self.ingest_sensor_data_question(txt_path, id)
 
-    def ingest_sensor_data_question(self, txt_path: Text):
+    def ingest_sensor_data_question(self, txt_path: Text, id: str):
         vectorstore_path = self.create_vectorstore()[1]
 
         loader = UnstructuredFileLoader(txt_path)
         raw_documents = loader.load()
 
-        self._save_vectorstore(raw_documents, vectorstore_path)
+        self._save_vectorstore(raw_documents, vectorstore_path, id)

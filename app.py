@@ -12,6 +12,10 @@ from api.routes.auth import router as AuthRouter
 from api.routes.me import router as MeRouter
 from api.routes.admin import router as AdminRouter
 from ai.routes.retrieval_system import router as DataIngestorRouter
+from ai.core.db_builder import db_builder
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="NướcGPT API Documentation",
@@ -42,6 +46,11 @@ s3_client.download_from_s3()
 @app.get("/", tags=["Root"])
 async def read_root():
     return {"message": "Welcome to NướcGPT."}
+
+@app.get("/insert-sensordata", tags=["Data"])
+async def insert_sensordata():
+    await db_builder()
+    return {"status": True}
 
 app.include_router(AuthRouter, tags=["Auth"], prefix="/v1/auth")
 app.include_router(

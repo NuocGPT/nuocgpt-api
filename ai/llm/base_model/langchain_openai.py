@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from typing import Tuple
@@ -9,20 +10,21 @@ import backoff
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
-from langchain.chains import ConversationalRetrievalChain, RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain import LLMChain
 from langchain.retrievers import MergerRetriever
 from langchain.vectorstores import FAISS
 from langchain.vectorstores.base import VectorStore
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.callbacks.manager import CallbackManagerForChainRun
 
 from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
 from ai.core.constants import LangChainOpenAIConstants, IngestDataConstants
-from ai.core.aws_service import AWSService
 from ai.llm.base_model.retrieval_chain import CustomConversationalRetrievalChain
 from ai.core.constants import IngestDataConstants
 from ai.llm.data_loader.vectorestore_retriever import CustomVectorStoreRetriever
+from ai.schemas.db_model import SensorDataLib
 
 from config.config import Settings
  
@@ -43,6 +45,8 @@ class LangchainOpenAI:
     ):
         self.output_parser = None
         self.is_chat_model, self.llm_cls, self.llm_model = self.load_llm_model()
+        self.metadata = metadata
+        self.chat_history = chat_history
 
         self.data_loader = LangChainDataLoader()
 
@@ -51,23 +55,14 @@ class LangchainOpenAI:
         else:
             self.lang = language
 
-        self.data_loader.preprocessing_qa_prompt(
-            metadata=self._format_dict_list(metadata or []),
-            language=self.lang,
-            chat_history = chat_history
-        )
-
-        vectorstore_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER)
+        vectorstore_folder_path = IngestDataConstants.TEMP_DB_FOLDER
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
-        
-    def get_chain(self, is_hello: bool) -> ConversationalRetrievalChain:
-        prompt_title = "helloPrompt" if is_hello else "qaPrompt"
 
-        if is_hello:
-            return LLMChain(llm=self.llm_model, prompt=self.data_loader.prompts[prompt_title])
-        else:
-            docs_chain = load_qa_chain(self.llm_model, prompt=self.data_loader.prompts[prompt_title])
+    def get_chain(self) -> ConversationalRetrievalChain:
+        prompt_title = "qaPrompt"
+
+        docs_chain = load_qa_chain(self.llm_model, prompt=self.data_loader.prompts[prompt_title])
         return CustomConversationalRetrievalChain(
             retriever=self.vectorstore_retriever,
             combine_docs_chain=docs_chain,
@@ -101,6 +96,28 @@ class LangchainOpenAI:
         
         except Exception as e:
             raise HTTPException(status_code=500, detail="Error when loading vectorstore")
+        
+    @staticmethod
+    def get_sensor_lib_retriever(sensor_lib_vts_folder_path: str, rspl_vts_search_kwargs: dict = None) -> MergerRetriever:
+        if rspl_vts_search_kwargs is None:
+            rspl_vts_search_kwargs = {"k": 1, "score_threshold": 0.3}
+
+        try:
+            embeddings = openai_embedding_with_backoff()
+            
+            if os.path.exists(f"{sensor_lib_vts_folder_path}/index.faiss"):
+                    sensor_lib_vectorstore = FAISS.load_local(sensor_lib_vts_folder_path, embeddings)
+
+                    sensor_lib_retriever = CustomVectorStoreRetriever(
+                        vectorstore=sensor_lib_vectorstore,
+                        search_type="similarity_score_threshold",
+                        search_kwargs=rspl_vts_search_kwargs,
+                        metadata={"name": "sensor_lib"},
+                    )
+
+            return MergerRetriever(retrievers=[sensor_lib_retriever])
+        except Exception as e:  # noqa
+            raise HTTPException(status_code=500, detail=f"Error when loading vectorstore. {e}")
 
     @staticmethod
     def load_llm_model():
@@ -154,3 +171,45 @@ class LangchainOpenAI:
                 result += json.dumps(info, indent=4).replace("{", "<").replace("}", ">")
                 result += "\n\n"
         return result
+    
+
+    async def query_relevant_answers(self, question):
+        self.relevant_answer = ""
+
+        if self.sensor_lib_vts_retriever:
+            try:
+            # Get the results of all retrievers.
+                retriever_docs = [
+                    (
+                        retriever.get_relevant_documents(
+                            question, callbacks=CallbackManagerForChainRun.get_noop_manager().get_child("retriever_{}".format(i + 1))
+                        ),
+                        retriever.metadata["name"],
+                    )
+                    for i, retriever in enumerate(self.sensor_lib_vts_retriever.retrievers)
+                ]
+            
+                # Merge the results of the retrievers.
+                merged_documents = []
+                merged_scores = []
+
+                max_docs = max(len(docs[0]) for docs in retriever_docs)
+                for i in range(max_docs):
+                    for retriever, doc_with_score in zip(self.sensor_lib_vts_retriever.retrievers, retriever_docs):
+                        if i < len(doc_with_score[0]):
+                            merged_documents.append(doc_with_score[0][i][0])
+                            merged_scores.append({"tag": doc_with_score[1], "score": doc_with_score[0][i][1]})
+
+            except Exception as e:
+                logging.warn(e)
+        
+            relevant_questions = merged_documents
+            if len(relevant_questions) > 0:
+                logging.info(f"Relevant questions: {relevant_questions}")
+                source = relevant_questions[0].metadata["source"].replace("\\", "/")
+                relevant_question_id = source.split("/")[-2]
+                query = await SensorDataLib.find_one(SensorDataLib.id == relevant_question_id)
+                if query:
+                    self.relevant_answer = query.answer
+                    self.score = merged_scores[0]["score"]
+        logging.info(f"Relevant answer: {self.relevant_answer}")

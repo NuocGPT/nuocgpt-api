@@ -1,4 +1,6 @@
 import logging
+import os
+from typing import Any, Dict
 from langchain import LLMChain
 from langchain.callbacks import get_openai_callback
 from langdetect import detect
@@ -8,12 +10,18 @@ from ai.llm.base_model.langchain_openai import LangchainOpenAI
 from ai.core.utils import preprocess_suggestion_request, check_hello
 from config.constants import ErrorChatMessage
 from langchain.memory import ConversationBufferMemory
+from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
+from ai.core.constants import IngestDataConstants
 
 async def chat(request: QARequest) -> str:
     processed_request = preprocess_suggestion_request(request)
 
     question=processed_request.get("question")
     language = processed_request.get("language")
+    
+    if check_hello(question):
+        chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2], prompt=LangChainDataLoader().prompts["helloPrompt"])
+        return chain.generate([{"message": question}]).generations[0][0].text.strip()
 
     chain = LangchainOpenAI(
         question=question,
@@ -21,20 +29,32 @@ async def chat(request: QARequest) -> str:
         language = language
     )
 
+    sensor_lib_vts_folder_path = os.path.join(IngestDataConstants.TEMP_DB_FOLDER, "sensor_data_lib")
+    chain.sensor_lib_vts_retriever = chain.get_sensor_lib_retriever(sensor_lib_vts_folder_path)
+
+    await chain.query_relevant_answers(question)
+        
+    chain.data_loader.preprocessing_qa_prompt(
+        metadata=chain._format_dict_list(chain.metadata or []),
+        language=chain.lang,
+        chat_history = chain.chat_history,
+        relevant_answer = chain.relevant_answer if chain.relevant_answer != "" else None
+    )
+
     try:
         with get_openai_callback() as cb:
             chat_history = processed_request.get("chat_history")
-            if check_hello(question):
-                chat_history = ""
-                qa_chain =  chain.get_chain(True)
-                return qa_chain.generate([{"message": question}]).generations[0][0].text.strip()
-            
-            qa_chain = chain.get_chain(False)
+            if chain.relevant_answer != "" and chain.score >= 0.9:
+                output: Dict[str, Any] = {"answer": chain.relevant_answer, "score": chain.score}
+                if chain.output_parser:
+                    output.update({"answer": chain.output_parser.parse(output["answer"])})
+                return output["answer"]
+            qa_chain = chain.get_chain()
             response = qa_chain({
                             "question": question,
                             "chat_history": chat_history                  
                         })
-            # logging.info(f"Response: {response}")
+            logging.info(f"Response: {response}")
             logging.info(
                 f"[Tokens used: {cb.total_tokens} "
                 f"(Prompt tokens: {cb.prompt_tokens}; "

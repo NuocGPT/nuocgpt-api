@@ -125,7 +125,7 @@ def check_hello(message):
         "xin chao",
         "chào",
     ]
-    if any(hello_word in lower_message for hello_word in hello_words):
+    if any(hello_word in lower_message.split(" ") for hello_word in hello_words):
         if not lower_message.endswith("?"):
             if not any(lower_message.startswith(word) for word in question_words):
                 return True
