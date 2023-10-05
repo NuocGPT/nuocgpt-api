@@ -33,6 +33,7 @@ class LangChainDataLoader:
         language: str,
         metadata: str,
         chat_history = None,
+        relevant_answer: str = None,
     ):
         for prompt_title in ["qaPrompt", "qaWithoutDocsPrompt"]:
             qa_template = self.prompts[prompt_title].template
@@ -40,6 +41,12 @@ class LangChainDataLoader:
                         f"Based on the conversation chat history and the new question of customer, "
                         f"write a helpful response in {language} language"
                     )
+            
+            if relevant_answer:
+                qa_template += (
+                    f"Here is a potential relevant answer. You should use information from it to generate the response."
+                    f"Relevant answer: {relevant_answer}"
+                )
 
             qa_template += "\nResponse:\n\n"
 

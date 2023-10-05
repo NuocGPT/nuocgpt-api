@@ -11,7 +11,11 @@ from api.routes.feedback import router as FeedbackRouter
 from api.routes.auth import router as AuthRouter
 from api.routes.me import router as MeRouter
 from api.routes.admin import router as AdminRouter
+from ai.routes.retrieval_system import router as DataIngestorRouter
 from ai.core.db_builder import db_builder
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="NướcGPT API Documentation",
@@ -71,6 +75,12 @@ app.include_router(
     AdminRouter,
     tags=["Admin"],
     prefix="/v1/admin",
+    dependencies=[Depends(token_listener)]
+)
+app.include_router(
+    DataIngestorRouter,
+    tags=["Data Ingestor"],
+    prefix="/v1/ingest",
     dependencies=[Depends(token_listener)]
 )
 
