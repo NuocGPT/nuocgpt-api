@@ -25,6 +25,7 @@ from ai.llm.base_model.retrieval_chain import CustomConversationalRetrievalChain
 from ai.core.constants import IngestDataConstants
 from ai.llm.data_loader.vectorestore_retriever import CustomVectorStoreRetriever
 from ai.schemas.db_model import SensorDataLib
+from uuid import UUID
 
 from config.config import Settings
  
@@ -208,7 +209,8 @@ class LangchainOpenAI:
                 logging.info(f"Relevant questions: {relevant_questions}")
                 source = relevant_questions[0].metadata["source"].replace("\\", "/")
                 relevant_question_id = source.split("/")[-2]
-                query = await SensorDataLib.find_one(SensorDataLib.id == relevant_question_id)
+                logging.info(f"Relevant questions id: {relevant_question_id}")
+                query = await SensorDataLib.find_one(SensorDataLib.id == UUID(relevant_question_id))
                 if query:
                     self.relevant_answer = query.answer
                     self.score = merged_scores[0]["score"]
