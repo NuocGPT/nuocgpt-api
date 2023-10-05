@@ -29,5 +29,3 @@ class SensorDataLib(Document):
 
     class Settings:
         name = "sensor_data_lib"
-
-    
