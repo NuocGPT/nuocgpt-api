@@ -1,4 +1,5 @@
 import inspect
+import logging
 from typing import Dict, Any, Optional, List, Tuple
 
 from langchain.callbacks.manager import CallbackManagerForChainRun, CallbackManager
@@ -7,6 +8,9 @@ from langchain.chains.conversational_retrieval.base import _get_chat_history
 from langchain.load.dump import dumpd
 from langchain.retrievers import MergerRetriever
 from langchain.schema import BaseOutputParser, Document
+from langchain.document_transformers import (
+    LongContextReorder,
+)
 
 class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
     retriever: MergerRetriever
@@ -34,6 +38,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             docs, scores = self._get_docs(new_question, inputs, run_manager=_run_manager)
         else:
             docs, scores = self._get_docs(new_question, inputs)  # type: ignore[call-arg]
+        logging.info(f"Retrieved docs with scores: {scores}")
         new_inputs = inputs.copy()
         if self.rephrase_question:
             new_inputs["question"] = new_question
@@ -105,8 +110,13 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                 merged_documents,
                 **kwargs,
             )
+        logging.info(f"Old docs: {merged_documents}")
 
-        return self._reduce_tokens_below_limit_with_score(merged_documents, merged_scores)
+        merged_documents, merged_scores = self._reduce_tokens_below_limit_with_score(merged_documents, merged_scores)
+        reordering = LongContextReorder()
+        reordered_docs = reordering.transform_documents(merged_documents)
+        reordered_scores = self._litm_reordering_scores(merged_scores)
+        return reordered_docs, reordered_scores
     
     def _reduce_tokens_below_limit_with_score(
         self, docs: List[Document], scores: List = None
@@ -121,3 +131,14 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                 token_count -= tokens[num_docs]
 
         return docs[:num_docs], scores[:num_docs]
+    
+    @staticmethod
+    def _litm_reordering_scores(scores: List = None) -> List[float]:
+        scores.reverse()
+        reordered_result = []
+        for i, value in enumerate(scores):
+            if i % 2 == 1:
+                reordered_result.append(value)
+            else:
+                reordered_result.insert(0, value)
+        return reordered_result

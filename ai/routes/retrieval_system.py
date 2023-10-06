@@ -1,14 +1,14 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from config.config import Settings
-
+import csv
 import os
-
-from schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest
-from core.data_ingestor import DataIngestor
-from core.constants import IngestDataConstants
+import asyncio
+from ai.schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest, ImportSensorDataRequest
+from ai.core.data_ingestor import DataIngestor
+from ai.core.constants import IngestDataConstants
 
 OPENAI_API_KEY = Settings().OPENAI_API_KEY
 MAX_FILE_SIZE = IngestDataConstants.MAX_FILE_SIZE
@@ -69,3 +69,34 @@ async def import_multi_files(
         return JSONResponse(status_code=500, content={"errorCode": 500, "errorMessage": e})
     
     return JSONResponse(status_code=200, content={"Add Document To VectorDB Successfully!"})
+
+@router.post("/import-sensor-data-question")
+async def import_sensor_data_question(question: str, id: str):
+    data_ingestor = DataIngestor()
+    try:
+        data_ingestor.load_sensor_data_question(question, id)
+    except Exception as e:
+        logging.error(e)
+
+async def import_data():
+    try:
+        with open('/tmp/sensordata.csv', 'r', encoding='utf-8') as file:
+            csvreader = csv.reader(file)
+            data = []
+            for row in csvreader:
+                data.append({"id": row[0], "question": row[1]})
+
+        for idx, question in enumerate(data):
+            print("INDEX", idx)
+            await import_sensor_data_question(question["question"], question["id"])
+        print("DONE")
+    except Exception as e:
+        logging.error(e)
+
+def add_data():
+    asyncio.run(import_data())
+
+@router.post("/import-sensor-data-lib")
+async def import_sensor_data_lib(background_tasks: BackgroundTasks=BackgroundTasks()):
+    background_tasks.add_task(add_data)
+    return {"status": True}
