@@ -59,6 +59,12 @@ class LangchainOpenAI:
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(vectorstore_folder_path=vectorstore_folder_path)
 
+        self.data_loader.preprocessing_qa_prompt(
+            metadata=self._format_dict_list(self.metadata or []),
+            language=self.lang,
+            chat_history = self.chat_history
+        )
+
     def get_chain(self) -> ConversationalRetrievalChain:
         prompt_title = "qaPrompt"
 
