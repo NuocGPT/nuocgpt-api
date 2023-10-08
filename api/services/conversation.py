@@ -37,9 +37,8 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Message:
         lang = detect(data.message)
         answer = IrrelevantMessage.VI if lang == "vi" else IrrelevantMessage.EN
     else:
-        user = await User.get(user_id)
         body = QARequest(messages=[{ "role": "user", "content": data.message }])
-        answer = await chat_without_docs(body) if RoleEnum.admin in user.roles else await chat(body)
+        answer = await chat(body)
     system_message = Message(
         conversation_id=conversation.id,
         question_id=question.id,
@@ -71,9 +70,8 @@ async def add_message(id: UUID, user_id: UUID, data: AddMessageDto) -> Message:
         lang = detect(data.message)
         answer = IrrelevantMessage.VI if lang == "vi" else IrrelevantMessage.EN
     else:
-        user = await User.get(user_id)
         body = QARequest(messages=[{"role": m.author.role, "content": m.content.parts[0]} for m in messages])
-        answer = await chat_without_docs(body) if RoleEnum.admin in user.roles else await chat(body)
+        answer = await chat(body)
     system_message = Message(
         conversation_id=id,
         question_id=question.id,
