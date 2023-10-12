@@ -87,7 +87,7 @@ async def chat_without_docs(request: QARequest) -> str:
         return chain.generate([{"message": question}]).generations[0][0].text.strip()
 
     if check_goodbye(question):
-        chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2])
+        chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2], prompt=LangChainDataLoader().prompts["goodbyePrompt"])
         return chain.generate([{"message": question}]).generations[0][0].text.strip()
 
     chain = LangchainOpenAI(question=question, metadata=processed_request.get("metadata"),
