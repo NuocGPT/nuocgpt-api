@@ -16,3 +16,6 @@ qaWithoutDocsPrompt:
 helloPrompt:
   filepath: "configs/prompts/hello_prompt.yaml"
   createdDate: "2023/09/28"
+goodbyePrompt:
+  filepath: "configs/prompts/goodbye_prompt.yaml"
+  createdDate: "2023/09/28"
