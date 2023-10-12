@@ -11,7 +11,7 @@ class BaseConstants:
 class IngestDataConstants(BaseConstants):
     CHUNK_SIZE = 4000
     CHUNK_OVERLAP = 500
-    TEMP_DB_FOLDER = '/tmp/vectorstores/'
+    TEMP_DB_FOLDER = 'files/vectorstores/'
     MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
     ALLOWED_EXTENSIONS = ["pdf", "json"]
     TEMP_UPLOADED_FOLDER = 'tmp/uploaded/'

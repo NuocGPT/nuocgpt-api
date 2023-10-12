@@ -8,7 +8,7 @@ async def db_builder():
         START
         ------------------------
     """)
-    with open('/tmp/sensordata.csv', 'r', encoding='utf-8') as file:
+    with open('files/sensordata.csv', 'r', encoding='utf-8') as file:
         csvreader = csv.reader(file)
         for row in csvreader:
             try:
