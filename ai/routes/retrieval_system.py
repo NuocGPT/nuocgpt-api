@@ -80,7 +80,7 @@ async def import_sensor_data_question(question: str, id: str):
 
 async def import_data():
     try:
-        with open('/tmp/sensordata.csv', 'r', encoding='utf-8') as file:
+        with open('files/sensordata.csv', 'r', encoding='utf-8') as file:
             csvreader = csv.reader(file)
             data = []
             for row in csvreader:
