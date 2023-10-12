@@ -125,7 +125,69 @@ def check_hello(message):
         "xin chao",
         "chào",
     ]
-    if any(hello_word in lower_message.split(" ") for hello_word in hello_words):
+
+    thank_words = [
+        "thank",
+        "thanks",
+        "cám ơn",
+        "cảm ơn",
+        "cam on"
+    ]
+    
+    if any(hello_word in lower_message.split(" ") for hello_word in hello_words) and not any(thank_word in lower_message for thank_word in thank_words):
+        if not lower_message.endswith("?"):
+            if not any(lower_message.startswith(word) for word in question_words):
+                return True
+
+    return False
+
+
+def check_goodbye(message):
+    lower_message = message.lower()
+    question_words = [
+        "who",
+        "what",
+        "when",
+        "where",
+        "why",
+        "how",
+        "is",
+        "are",
+        "can",
+        "could",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "should",
+        "may",
+        "might",
+    ]
+
+    hello_words = [
+        "xin chao",
+        "chào",
+    ]
+
+    thank_words = [
+        "thank",
+        "thanks",
+        "cám ơn",
+        "cảm ơn",
+        "cam on"
+    ]
+
+    bye_words = [
+        "goodbye",
+        "bye",
+        "tạm biệt"
+    ]
+    
+    if \
+    (any(hello_word in lower_message.split(" ") for hello_word in hello_words) \
+     and any(thank_word in lower_message for thank_word in thank_words)) \
+    or (any(bye_word in lower_message for bye_word in bye_words)):
         if not lower_message.endswith("?"):
             if not any(lower_message.startswith(word) for word in question_words):
                 return True

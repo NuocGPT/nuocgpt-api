@@ -7,7 +7,7 @@ from langdetect import detect
 
 from ai.schemas.schemas import QARequest
 from ai.llm.base_model.langchain_openai import LangchainOpenAI
-from ai.core.utils import preprocess_suggestion_request, check_hello
+from ai.core.utils import preprocess_suggestion_request, check_hello, check_goodbye
 from config.constants import ErrorChatMessage
 from langchain.memory import ConversationBufferMemory
 from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
@@ -22,7 +22,11 @@ async def chat(request: QARequest) -> str:
     if check_hello(question):
         chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2], prompt=LangChainDataLoader().prompts["helloPrompt"])
         return chain.generate([{"message": question}]).generations[0][0].text.strip()
-
+    
+    if check_goodbye(question):
+        chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2])
+        return chain.generate([{"message": question}]).generations[0][0].text.strip()
+                         
     chain = LangchainOpenAI(
         question=question,
         metadata=processed_request.get("metadata"),
@@ -80,6 +84,11 @@ async def chat_without_docs(request: QARequest) -> str:
     if check_hello(question):
         chat_history = ""
         chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2], prompt=LangChainDataLoader().prompts["helloPrompt"])
+        return chain.generate([{"message": question}]).generations[0][0].text.strip()
+
+    if check_goodbye(question):
+        chat_history = ""
+        chain = LLMChain(llm=LangchainOpenAI.load_llm_model()[2])
         return chain.generate([{"message": question}]).generations[0][0].text.strip()
 
     chain = LangchainOpenAI(question=question, metadata=processed_request.get("metadata"),
