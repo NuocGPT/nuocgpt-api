@@ -41,7 +41,7 @@ class LangchainOpenAI:
     def __init__(
         self,
         question,
-        language: str = None,
+        language: str = "Vietnamese",
         metadata: list[dict] = None,
         chat_history=None,
     ):
