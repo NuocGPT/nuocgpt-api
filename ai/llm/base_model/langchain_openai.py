@@ -304,14 +304,11 @@ class LangchainOpenAI:
 
             relevant_questions = merged_documents
             if len(relevant_questions) > 0:
-                logging.info(f"Relevant questions: {relevant_questions}")
                 source = relevant_questions[0].metadata["source"].replace("\\", "/")
                 relevant_question_id = source.split("/")[-2]
-                logging.info(f"Relevant questions id: {relevant_question_id}")
                 query = await SensorDataLib.find_one(
                     SensorDataLib.id == UUID(relevant_question_id)
                 )
                 if query:
                     self.relevant_answer = query.answer
                     self.score = merged_scores[0]["score"]
-        logging.info(f"Relevant answer: {self.relevant_answer}")
