@@ -43,8 +43,13 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         else:
             docs, scores = self._get_docs(new_question, inputs)  # type: ignore[call-arg]
 
-        if dataset == "diamond" and len(docs) > 0:
-            return {self.output_key: "NO DATA"}
+        if dataset == "diamond" and len(docs) == 0:
+            output = {self.output_key: "NO DATA"}
+            if self.return_source_documents:
+                output["source_documents"] = docs
+            if self.return_generated_question:
+                output["generated_question"] = new_question
+            return output
         new_inputs = inputs.copy()
         if self.rephrase_question:
             new_inputs["question"] = new_question
