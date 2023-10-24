@@ -70,18 +70,22 @@ async def chat(request: QARequest) -> str:
                 return output["answer"]
 
             qa_chain = chain.get_diamond_chain()
-            result = qa_chain({"question": question, "chat_history": chat_history})
-            if len(result["source_documents"]) > 0:
-                return result["answer"]
-
-            qa_chain = chain.get_chain()
-            response = qa_chain({"question": question, "chat_history": chat_history})
-            logging.info(f"Response: {response}")
-            logging.info(
-                f"[Tokens used: {cb.total_tokens} "
-                f"(Prompt tokens: {cb.prompt_tokens}; "
-                f"Completion tokens: {cb.completion_tokens})"
+            result = qa_chain(
+                {
+                    "question": question,
+                    "chat_history": chat_history,
+                    "dataset": "diamond",
+                }
             )
+            if result["answer"] == "NO DATA":
+                qa_chain = chain.get_chain()
+                response = qa_chain(
+                    {
+                        "question": question,
+                        "chat_history": chat_history,
+                        "dataset": "normal",
+                    }
+                )
 
     except Exception as e:
         logging.exception(e)
