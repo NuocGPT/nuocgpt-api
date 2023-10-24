@@ -1,16 +1,15 @@
 import inspect
 import logging
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from langchain.callbacks.manager import CallbackManagerForChainRun, CallbackManager
+from langchain.callbacks.manager import CallbackManager, CallbackManagerForChainRun
 from langchain.chains import ConversationalRetrievalChain, StuffDocumentsChain
 from langchain.chains.conversational_retrieval.base import _get_chat_history
+from langchain.document_transformers import LongContextReorder
 from langchain.load.dump import dumpd
 from langchain.retrievers import MergerRetriever
 from langchain.schema import BaseOutputParser, Document
-from langchain.document_transformers import (
-    LongContextReorder,
-)
+
 
 class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
     retriever: MergerRetriever
@@ -25,6 +24,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         question = inputs["question"]
         get_chat_history = self.get_chat_history or _get_chat_history
         chat_history_str = get_chat_history(inputs["chat_history"])
+        dataset = inputs["dataset"]
 
         if chat_history_str:
             callbacks = _run_manager.get_child()
@@ -33,17 +33,25 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             )
         else:
             new_question = question
-        accepts_run_manager = "run_manager" in inspect.signature(self._get_docs).parameters
+        accepts_run_manager = (
+            "run_manager" in inspect.signature(self._get_docs).parameters
+        )
         if accepts_run_manager:
-            docs, scores = self._get_docs(new_question, inputs, run_manager=_run_manager)
+            docs, scores = self._get_docs(
+                new_question, inputs, run_manager=_run_manager
+            )
         else:
             docs, scores = self._get_docs(new_question, inputs)  # type: ignore[call-arg]
-        logging.info(f"Retrieved docs with scores: {scores}")
+
+        if dataset == "diamond" and len(docs) > 0:
+            return {self.output_key: "NO DATA"}
         new_inputs = inputs.copy()
         if self.rephrase_question:
             new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str
-        answer = self.combine_docs_chain.run(input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs)
+        answer = self.combine_docs_chain.run(
+            input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs
+        )
         output: Dict[str, Any] = {self.output_key: answer, "scores": scores}
         if self.return_source_documents:
             output["source_documents"] = docs
@@ -52,7 +60,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         if self.output_parser is not None:
             output.update({"answer": self.output_parser.parse(output["answer"])})
         return output
-    
+
     def _get_docs(
         self,
         question: str,
@@ -84,7 +92,8 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             retriever_docs = [
                 (
                     retriever.get_relevant_documents(
-                        question, callbacks=run_manager.get_child("retriever_{}".format(i + 1))
+                        question,
+                        callbacks=run_manager.get_child("retriever_{}".format(i + 1)),
                     ),
                     retriever.metadata["name"],
                 )
@@ -100,7 +109,9 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                 for _, doc_with_score in zip(self.retriever.retrievers, retriever_docs):
                     if i < len(doc_with_score[0]):
                         merged_documents.append(doc_with_score[0][i][0])
-                        merged_scores.append({"tag": doc_with_score[1], "score": doc_with_score[0][i][1]})
+                        merged_scores.append(
+                            {"tag": doc_with_score[1], "score": doc_with_score[0][i][1]}
+                        )
 
         except Exception as e:
             run_manager.on_retriever_error(e)
@@ -110,28 +121,34 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                 merged_documents,
                 **kwargs,
             )
-        logging.info(f"Old docs: {merged_documents}")
 
-        merged_documents, merged_scores = self._reduce_tokens_below_limit_with_score(merged_documents, merged_scores)
+        merged_documents, merged_scores = self._reduce_tokens_below_limit_with_score(
+            merged_documents, merged_scores
+        )
         reordering = LongContextReorder()
         reordered_docs = reordering.transform_documents(merged_documents)
         reordered_scores = self._litm_reordering_scores(merged_scores)
         return reordered_docs, reordered_scores
-    
+
     def _reduce_tokens_below_limit_with_score(
         self, docs: List[Document], scores: List = None
     ) -> Tuple[List[Document], List[float]]:
         num_docs = len(docs)
 
-        if self.max_tokens_limit and isinstance(self.combine_docs_chain, StuffDocumentsChain):
-            tokens = [self.combine_docs_chain.llm_chain.llm.get_num_tokens(doc.page_content) for doc in docs]
+        if self.max_tokens_limit and isinstance(
+            self.combine_docs_chain, StuffDocumentsChain
+        ):
+            tokens = [
+                self.combine_docs_chain.llm_chain.llm.get_num_tokens(doc.page_content)
+                for doc in docs
+            ]
             token_count = sum(tokens[:num_docs])
             while token_count > self.max_tokens_limit:
                 num_docs -= 1
                 token_count -= tokens[num_docs]
 
         return docs[:num_docs], scores[:num_docs]
-    
+
     @staticmethod
     def _litm_reordering_scores(scores: List = None) -> List[float]:
         scores.reverse()
