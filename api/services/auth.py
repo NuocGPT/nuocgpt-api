@@ -55,6 +55,21 @@ async def user_signup(data: SignUpDto = Body(...)):
     return {"id": user.id, "email": user.email}
 
 
+async def seeding():
+    for x in range(25):
+        password = hash_helper.encrypt("Nuocgpt@123")
+        new_user = User(
+            email='nuocuser{0}@nuocgpt.ai'.format(x + 1),
+            password=password,
+            roles=[RoleEnum.user],
+            is_verified=True,
+            created_at=datetime.now()
+        )
+
+        await new_user.create()
+    return {"status": True}
+
+
 async def verify_otp(data: VerifyOTPDto = Body(...)):
     user = await User.find_one(User.email == data.email)
     if not user:
