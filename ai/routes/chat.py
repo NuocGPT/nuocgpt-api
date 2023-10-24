@@ -86,6 +86,8 @@ async def chat(request: QARequest) -> str:
                         "dataset": "normal",
                     }
                 )
+            else:
+                return result["answer"]
 
     except Exception as e:
         logging.exception(e)
