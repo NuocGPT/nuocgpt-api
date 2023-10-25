@@ -51,7 +51,7 @@ class LangchainOpenAI:
         self.chat_history = chat_history
 
         self.data_loader = LangChainDataLoader()
-
+        print(language)
         if language == None:
             self.lang = self._detect_language(question)
         else:
