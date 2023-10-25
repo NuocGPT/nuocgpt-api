@@ -85,7 +85,7 @@ class LangchainOpenAI:
             question_generator=LLMChain(
                 llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]
             ),
-            max_tokens_limit=3500,
+            max_tokens_limit=4000,
             output_parser=self.output_parser,
             return_source_documents=True,
             return_generated_question=True,
@@ -103,7 +103,7 @@ class LangchainOpenAI:
             question_generator=LLMChain(
                 llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]
             ),
-            max_tokens_limit=3500,
+            max_tokens_limit=4000,
             output_parser=self.output_parser,
             return_source_documents=True,
             return_generated_question=True,
