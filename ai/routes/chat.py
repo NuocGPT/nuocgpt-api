@@ -36,7 +36,9 @@ async def chat(request: QARequest) -> str:
         return chain.generate([{"message": question}]).generations[0][0].text.strip()
 
     chain = LangchainOpenAI(
-        question=question, metadata=processed_request.get("metadata"), language=language
+        question=question,
+        metadata=processed_request.get("metadata"),
+        language=language if language else "Vietnamese",
     )
 
     # sensor_lib_vts_folder_path = os.path.join(
