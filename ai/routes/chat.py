@@ -39,35 +39,35 @@ async def chat(request: QARequest) -> str:
         question=question, metadata=processed_request.get("metadata"), language=language
     )
 
-    sensor_lib_vts_folder_path = os.path.join(
-        IngestDataConstants.TEMP_DB_FOLDER, "sensor_data_lib"
-    )
-    chain.sensor_lib_vts_retriever = chain.get_sensor_lib_retriever(
-        sensor_lib_vts_folder_path
-    )
+    # sensor_lib_vts_folder_path = os.path.join(
+    #     IngestDataConstants.TEMP_DB_FOLDER, "sensor_data_lib"
+    # )
+    # chain.sensor_lib_vts_retriever = chain.get_sensor_lib_retriever(
+    #     sensor_lib_vts_folder_path
+    # )
 
-    await chain.query_relevant_answers(question)
+    # await chain.query_relevant_answers(question)
 
-    chain.data_loader.preprocessing_qa_prompt(
-        metadata=chain._format_dict_list(chain.metadata or []),
-        language=chain.lang,
-        chat_history=chain.chat_history,
-        relevant_answer=chain.relevant_answer if chain.relevant_answer != "" else None,
-    )
+    # chain.data_loader.preprocessing_qa_prompt(
+    #     metadata=chain._format_dict_list(chain.metadata or []),
+    #     language=chain.lang,
+    #     chat_history=chain.chat_history,
+    #     relevant_answer=chain.relevant_answer if chain.relevant_answer != "" else None,
+    # )
 
     try:
         with get_openai_callback() as cb:
             chat_history = processed_request.get("chat_history")
-            if chain.relevant_answer != "" and chain.score >= 0.8:
-                output: Dict[str, Any] = {
-                    "answer": chain.relevant_answer,
-                    "score": chain.score,
-                }
-                if chain.output_parser:
-                    output.update(
-                        {"answer": chain.output_parser.parse(output["answer"])}
-                    )
-                return output["answer"]
+            # if chain.relevant_answer != "" and chain.score >= 0.8:
+            #     output: Dict[str, Any] = {
+            #         "answer": chain.relevant_answer,
+            #         "score": chain.score,
+            #     }
+            #     if chain.output_parser:
+            #         output.update(
+            #             {"answer": chain.output_parser.parse(output["answer"])}
+            #         )
+            #     return output["answer"]
 
             qa_chain = chain.get_diamond_chain()
             result = qa_chain(
