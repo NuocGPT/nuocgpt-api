@@ -3,7 +3,10 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from langchain.callbacks.manager import CallbackManager, CallbackManagerForChainRun
+from langchain.callbacks.manager import (
+    AsyncCallbackManager,
+    AsyncCallbackManagerForChainRun,
+)
 from langchain.chains import ConversationalRetrievalChain, StuffDocumentsChain
 from langchain.chains.conversational_retrieval.base import _get_chat_history
 from langchain.document_transformers import LongContextReorder
@@ -16,12 +19,12 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
     retriever: MergerRetriever
     output_parser: BaseOutputParser = None
 
-    def _call(
+    async def acall(
         self,
         inputs: Dict[str, Any],
-        run_manager: Optional[CallbackManagerForChainRun] = None,
+        run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
     ) -> Dict[str, Any]:
-        _run_manager = run_manager or CallbackManagerForChainRun.get_noop_manager()
+        _run_manager = run_manager or AsyncCallbackManagerForChainRun.get_noop_manager()
         question = inputs["question"]
         get_chat_history = self.get_chat_history or _get_chat_history
         chat_history_str = get_chat_history(inputs["chat_history"])
@@ -34,7 +37,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         total = 0
         if chat_history_str:
             callbacks = _run_manager.get_child()
-            new_question = self.question_generator.run(
+            new_question = await self.question_generator.arun(
                 question=question, chat_history=chat_history_str, callbacks=callbacks
             )
         else:
@@ -46,14 +49,14 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         logging.info(f"TOTAL TIME TO CREATE CONDENSE QUESTION: {total}")
         logging.info("----------------START RETRIEVING--------------------")
         accepts_run_manager = (
-            "run_manager" in inspect.signature(self._get_docs).parameters
+            "run_manager" in inspect.signature(self._aget_docs).parameters
         )
         if accepts_run_manager:
-            docs, scores = self._get_docs(
+            docs, scores = await self._aget_docs(
                 new_question, inputs, run_manager=_run_manager
             )
         else:
-            docs, scores = self._get_docs(new_question, inputs)  # type: ignore[call-arg]
+            docs, scores = await self._aget_docs(new_question, inputs)  # type: ignore[call-arg]
 
         total = time.time() - start
         start = time.time()
@@ -70,7 +73,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         if self.rephrase_question:
             new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str
-        answer = self.combine_docs_chain.run(
+        answer = await self.combine_docs_chain.arun(
             input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs
         )
         total = time.time() - start
@@ -85,19 +88,19 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             output.update({"answer": self.output_parser.parse(output["answer"])})
         return output
 
-    def _get_docs(
+    async def _aget_docs(
         self,
         question: str,
         inputs: Dict[str, Any],
         *,
-        run_manager: CallbackManagerForChainRun,
+        run_manager: AsyncCallbackManagerForChainRun,
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> tuple[list[Document], list[float]]:
         """Get docs."""
 
-        callback_manager = CallbackManager.configure(
+        callback_manager = AsyncCallbackManager.configure(
             run_manager.get_child(),
             None,
             verbose=kwargs.get("verbose", False),
@@ -106,7 +109,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             inheritable_metadata=metadata,
             local_metadata=self.metadata,
         )
-        run_manager = callback_manager.on_retriever_start(
+        run_manager = await callback_manager.on_retriever_start(
             dumpd(self),
             question,
             **kwargs,
@@ -115,7 +118,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             # Get the results of all retrievers.
             retriever_docs = [
                 (
-                    retriever.get_relevant_documents(
+                    await retriever.aget_relevant_documents(
                         question,
                         callbacks=run_manager.get_child("retriever_{}".format(i + 1)),
                     ),
