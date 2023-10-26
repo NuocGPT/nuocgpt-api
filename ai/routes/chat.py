@@ -72,7 +72,7 @@ async def chat(request: QARequest) -> str:
             #     return output["answer"]
 
             qa_chain = chain.get_diamond_chain()
-            result = qa_chain(
+            result = await qa_chain.acall(
                 {
                     "question": question,
                     "chat_history": chat_history,
@@ -81,7 +81,7 @@ async def chat(request: QARequest) -> str:
             )
             if result["answer"] == "NO DATA":
                 qa_chain = chain.get_chain()
-                response = qa_chain(
+                response = await qa_chain.acall(
                     {
                         "question": question,
                         "chat_history": chat_history,
