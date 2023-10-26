@@ -166,7 +166,7 @@ class LangchainOpenAI:
 
         except Exception as e:
             raise HTTPException(
-                status_code=500, detail="Error when loading diamond vectorstore"
+                status_code=500, detail=f"Error when loading diamond vectorstore, {e}"
             )
 
     @staticmethod
