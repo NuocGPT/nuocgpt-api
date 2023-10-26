@@ -1,5 +1,6 @@
 import inspect
 import logging
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from langchain.callbacks.manager import CallbackManager, CallbackManagerForChainRun
@@ -26,6 +27,11 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         chat_history_str = get_chat_history(inputs["chat_history"])
         dataset = inputs["dataset"]
 
+        start = time.time()
+        logging.info(
+            "---------------START CREATE CONDENSE QUESTION------------------------"
+        )
+        total = 0
         if chat_history_str:
             callbacks = _run_manager.get_child()
             new_question = self.question_generator.run(
@@ -33,6 +39,12 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             )
         else:
             new_question = question
+
+        logging.info(f"CONDENSE QUESTION: {new_question}")
+        total = time.time() - start
+        start = time.time()
+        logging.info(f"TOTAL TIME TO CREATE CONDENSE QUESTION: {total}")
+        logging.info("----------------START RETRIEVING--------------------")
         accepts_run_manager = (
             "run_manager" in inspect.signature(self._get_docs).parameters
         )
@@ -43,6 +55,10 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         else:
             docs, scores = self._get_docs(new_question, inputs)  # type: ignore[call-arg]
 
+        total = time.time() - start
+        start = time.time()
+        logging.info(f"TOTAL TIME TO RETRIEVE DOCS: {total}")
+        logging.info("----------------START TO CHAT WITH GPT---------------------")
         if dataset == "diamond" and len(docs) == 0:
             output = {self.output_key: "NO DATA"}
             if self.return_source_documents:
@@ -57,6 +73,9 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         answer = self.combine_docs_chain.run(
             input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs
         )
+        total = time.time() - start
+        start = time.time()
+        logging.info(f"TOTAL TIME TO GET ANSWER FROM OPENAI: {total}")
         output: Dict[str, Any] = {self.output_key: answer, "scores": scores}
         if self.return_source_documents:
             output["source_documents"] = docs
