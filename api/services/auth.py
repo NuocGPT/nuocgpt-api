@@ -4,12 +4,14 @@ from datetime import datetime, timedelta
 
 from api.auth.jwt_handler import sign_jwt
 from api.models.user import RoleEnum, User
+from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
 from api.schemas.auth import *
 from config.constants import ErrorMessage
 from api.services.mail import send_otp, send_otp_forgot_password
 from api.utils.string import generateOTP
 from config.config import Settings
 
+import xlsxwriter
 
 hash_helper = CryptContext(schemes=["bcrypt"])
 
@@ -56,17 +58,25 @@ async def user_signup(data: SignUpDto = Body(...)):
 
 
 async def seeding():
-    for x in range(25):
-        password = hash_helper.encrypt("Nuocgpt@123")
-        new_user = User(
-            email='nuocuser{0}@nuocgpt.ai'.format(x + 1),
-            password=password,
-            roles=[RoleEnum.user],
-            is_verified=True,
-            created_at=datetime.now()
-        )
+    user_messages = await Message.find(Message.created_at > datetime.today() - timedelta(days=13), Message.author.role == 'user').sort("created_at").to_list()
+    workbook = xlsxwriter.Workbook('data.xlsx')
+    worksheet = workbook.add_worksheet()
 
-        await new_user.create()
+    worksheet.write('A1', 'Time')
+    worksheet.write('B1', 'User')
+    worksheet.write('C1', 'Question')
+    worksheet.write('D1', 'Answer')
+
+    for idx, m in enumerate(user_messages):
+        user = await User.find_one(User.id == m.author.id)
+        answer = await Message.find_one(Message.question_id == m.id, Message.author.role == 'system')
+        worksheet.write("A{0}".format(idx + 2), str(m.created_at))
+        worksheet.write("B{0}".format(idx + 2), str(user.email) if user else '')
+        worksheet.write("C{0}".format(idx + 2), str(m.content.parts[0]))
+        worksheet.write("D{0}".format(idx + 2), str(answer.content.parts[0]) if answer else '')
+
+    workbook.close()
+
     return {"status": True}
 
 
