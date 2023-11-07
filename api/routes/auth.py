@@ -19,11 +19,6 @@ async def sign_up(data: SignInDto = Body(...)):
     return await user_signup(data)
 
 
-@router.get("/user-seeding")
-async def user_seeding():
-    return await seeding()
-
-
 @router.post("/verify-otp")
 async def verify_otp_verification(data: VerifyOTPDto = Body(...)):
     return await verify_otp(data)
