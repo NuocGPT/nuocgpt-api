@@ -58,7 +58,7 @@ async def user_signup(data: SignUpDto = Body(...)):
 
 
 async def seeding():
-    user_messages = await Message.find(Message.created_at > datetime.today() - timedelta(days=13), Message.author.role == 'user').sort("created_at").to_list()
+    user_messages = await Message.find(Message.created_at > datetime.today() - timedelta(days=14), Message.author.role == 'user').sort("created_at").to_list()
     workbook = xlsxwriter.Workbook('data.xlsx')
     worksheet = workbook.add_worksheet()
 
