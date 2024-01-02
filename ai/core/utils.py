@@ -1,11 +1,11 @@
 import re
-
 from typing import Tuple
 
 from fastapi import HTTPException
 
-from ai.schemas.schemas import QARequest
 from ai.core.message_shortener import shorten_message
+from ai.schemas.schemas import QARequest
+
 
 def preprocess_suggestion_request(request_body: QARequest):
     messages = request_body.messages
@@ -22,15 +22,22 @@ def preprocess_suggestion_request(request_body: QARequest):
         "chat_history": chat_history,
         "previous_response": previous_response,
         "metadata": metadata,
-        "language": language
+        "language": language,
     }
 
+
 def preprocess_chat_history(
-    chat_history: list, max_words_each_message: int = 400, max_recent_chat_history: int = 4
+    chat_history: list,
+    max_words_each_message: int = 400,
+    max_recent_chat_history: int = 2,
 ) -> Tuple[list, str, str]:
     new_chat_history = []
     question = ""
     previous_response = ""
+
+    if len(chat_history) > max_recent_chat_history:
+        chat_history = chat_history[-max_recent_chat_history:]
+
     if len(chat_history):
         current_item = None
 
@@ -47,12 +54,16 @@ def preprocess_chat_history(
 
         if current_item is not None:
             # Normalize the message string
-            current_item["content"] = current_item["content"].replace("\xa0", " ").replace("\\xa0", " ")
+            current_item["content"] = (
+                current_item["content"].replace("\xa0", " ").replace("\\xa0", " ")
+            )
 
             # Shorten message if it is too long
             content_word_len = len(re.findall(r"\w+", current_item["content"]))
             if content_word_len > max_words_each_message:
-                current_item["content"] = shorten_message(current_item["content"], max_words_each_message)
+                current_item["content"] = shorten_message(
+                    current_item["content"], max_words_each_message
+                )
 
             new_chat_history.append(current_item)
 
@@ -91,10 +102,8 @@ def preprocess_chat_history(
         question[0] = question[0].upper()
         question = "".join(question)
 
-    if len(chat_history) > max_recent_chat_history:
-        chat_history = chat_history[-max_recent_chat_history:]
-
     return chat_history, question, previous_response
+
 
 def check_hello(message):
     lower_message = message.lower()
@@ -118,7 +127,62 @@ def check_hello(message):
         "may",
         "might",
     ]
-    if "hello" in lower_message.split() or "hi" in lower_message.split():
+
+    hello_words = [
+        "hello",
+        "hi",
+        "xin chao",
+        "chào",
+    ]
+
+    thank_words = ["thank", "thanks", "cám ơn", "cảm ơn", "cam on"]
+
+    if any(
+        hello_word in lower_message.split(" ") for hello_word in hello_words
+    ) and not any(thank_word in lower_message for thank_word in thank_words):
+        if not lower_message.endswith("?"):
+            if not any(lower_message.startswith(word) for word in question_words):
+                return True
+
+    return False
+
+
+def check_goodbye(message):
+    lower_message = message.lower()
+    question_words = [
+        "who",
+        "what",
+        "when",
+        "where",
+        "why",
+        "how",
+        "is",
+        "are",
+        "can",
+        "could",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "should",
+        "may",
+        "might",
+    ]
+
+    hello_words = [
+        "xin chao",
+        "chào",
+    ]
+
+    thank_words = ["thank", "thanks", "cám ơn", "cảm ơn", "cam on"]
+
+    bye_words = ["goodbye", "bye", "tạm biệt"]
+
+    if (
+        any(hello_word in lower_message.split(" ") for hello_word in hello_words)
+        and any(thank_word in lower_message for thank_word in thank_words)
+    ) or (any(bye_word in lower_message for bye_word in bye_words)):
         if not lower_message.endswith("?"):
             if not any(lower_message.startswith(word) for word in question_words):
                 return True

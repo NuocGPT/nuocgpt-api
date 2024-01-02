@@ -1,6 +1,6 @@
 from ai.llm.base_model.langchain_openai import LangchainOpenAI
 
-from nltk.tokenize import word_tokenize
+from langchain.text_splitter import TokenTextSplitter
 from langchain.schema import HumanMessage
 
 def split_text(tokens, chunk_size, overlap_size):
@@ -13,8 +13,12 @@ def split_text(tokens, chunk_size, overlap_size):
 
 
 def split_text_to_chunks(text: str, chunk_size=1000, overlap_size=100):
-    tokens = word_tokenize(text)
-    return list(split_text(tokens, chunk_size, overlap_size))
+    text_splitter = TokenTextSplitter(
+            model_name="gpt-3.5-turbo",
+            chunk_size=chunk_size,
+            chunk_overlap=overlap_size,
+        )  
+    return text_splitter.split_text(text)
 
 def convert_to_detokenized_text(tokenized_text):
     prompt_text = " ".join(tokenized_text)
@@ -30,7 +34,7 @@ def shorten_message(message: str, max_words: int = 150) -> str:
 
     for i, chunk in enumerate(chunks):
         chunk_text = convert_to_detokenized_text(chunk)
-        shorten_message_prompt = f"""Given the following message, please shorten it in maximum {max_words} words.
+        shorten_message_prompt = f"""Given the following message, shorten it in maximum {max_words} words.
         Message: {chunk_text}
         Shortened message:\n\n"""
 

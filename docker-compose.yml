@@ -21,23 +21,15 @@ services:
       - mongodb
     volumes:
       - .:/app
-    networks:
-      - node-network
 
   mongodb:
     image: mongo:7.0.0
     restart: unless-stopped
     ports:
-     - 27017:27017
+      - 27017:27017
     volumes:
       - mongodbdata:/data/db
-    networks:
-      - node-network
 
 volumes:
   mongodbdata:
     driver: local
-
-networks:
-  node-network:
-    driver: bridge

@@ -31,20 +31,35 @@ class LangChainDataLoader:
     def preprocessing_qa_prompt(
         self,
         language: str,
-        metadata: str
+        metadata: str,
+        chat_history = None,
+        relevant_answer: str = None,
     ):
-        for prompt_title in ["qaPrompt"]:
+        for prompt_title in ["qaPrompt", "qaWithoutDocsPrompt"]:
             qa_template = self.prompts[prompt_title].template
             qa_template += (
-                        f"Based on the conversation chat history and the new request of customer, "
+                        f"Based on the conversation chat history and the new question of customer, "
                         f"write a helpful response in {language} language"
                     )
+            
+            if relevant_answer:
+                qa_template += (
+                    f"Here is a potential relevant answer. You should use information from it to generate the response."
+                    f"Relevant answer: {relevant_answer}"
+                )
 
             qa_template += "\nResponse:\n\n"
 
-            qa_template = qa_template.format(
-                metadata=metadata,
-                context="{context}",
-                question="{question}",
-            )
-            self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["context", "question"])
+            if prompt_title == "qaPrompt":
+                qa_template = qa_template.format(
+                                    metadata=metadata,
+                                    context="{context}",
+                                    question="{question}",
+                                )
+                self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["context", "question"])
+            else:
+                qa_template = qa_template.format(
+                                    chat_history = chat_history,
+                                    question="{question}",
+                                )
+                self.prompts[prompt_title] = PromptTemplate(template=qa_template, input_variables=["question"])

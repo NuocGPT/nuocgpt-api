@@ -27,7 +27,7 @@ class AWSService:
         objects = self.s3.list_objects_v2(Bucket=s3_bucket)
         for obj in objects.get('Contents', []):
             s3_key = obj['Key']
-            local_file_path = os.path.join("/tmp/", s3_key)
+            local_file_path = os.path.join("files/", s3_key)
             os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
             with open(local_file_path, "wb") as f:
                 self.s3.download_fileobj(s3_bucket, s3_key, f)

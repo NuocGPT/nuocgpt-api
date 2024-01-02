@@ -10,3 +10,12 @@ condensePrompt:
 summarizePrompt:
   filepath: "configs/prompts/summarize_prompt.yaml"
   createdDate: "2023/09/07"
+qaWithoutDocsPrompt:
+  filepath: "configs/prompts/qa_without_docs_prompt.yaml"
+  createdDate: "2023/09/25"
+helloPrompt:
+  filepath: "configs/prompts/hello_prompt.yaml"
+  createdDate: "2023/09/28"
+goodbyePrompt:
+  filepath: "configs/prompts/goodbye_prompt.yaml"
+  createdDate: "2023/09/28"
