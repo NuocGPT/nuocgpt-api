@@ -14,6 +14,7 @@ from api.routes.auth import router as AuthRouter
 from api.routes.conversation import router as ConversationRouter
 from api.routes.feedback import router as FeedbackRouter
 from api.routes.me import router as MeRouter
+from api.routes.message import router as MessageRouter
 
 logging.basicConfig(level=logging.INFO)
 
@@ -57,6 +58,12 @@ app.include_router(
     ConversationRouter,
     tags=["Conversation"],
     prefix="/v1/conversations",
+    dependencies=[Depends(token_listener)],
+)
+app.include_router(
+    MessageRouter,
+    tags=["Message"],
+    prefix="/v1/messages",
     dependencies=[Depends(token_listener)],
 )
 app.include_router(

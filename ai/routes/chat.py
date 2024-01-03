@@ -1,16 +1,15 @@
 import logging
-import os
-from typing import Any, Dict
 
 from langchain import LLMChain
 from langchain.callbacks import get_openai_callback
 from langchain.memory import ConversationBufferMemory
 from langdetect import detect
 
-from ai.core.constants import IngestDataConstants
+from ai.callback.handler.stream_llm import StreamingLLMCallbackHandler
 from ai.core.utils import check_goodbye, check_hello, preprocess_suggestion_request
 from ai.llm.base_model.langchain_openai import LangchainOpenAI
 from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
+from ai.responses.stream_llm import ConversationalRetrievalStreamingResponse
 from ai.schemas.schemas import QARequest
 from config.constants import ErrorChatMessage
 
@@ -97,6 +96,38 @@ async def chat(request: QARequest) -> str:
         answer = ErrorChatMessage.VI if lang == "vi" else ErrorChatMessage.EN
         return answer
     return response["answer"]
+
+
+async def stream_chat(request: QARequest):
+    try:
+        processed_request = preprocess_suggestion_request(request)
+
+        question = processed_request.get("question")
+        language = processed_request.get("language")
+
+        qa_chain = LangchainOpenAI(
+            question=question,
+            metadata=processed_request.get("metadata"),
+            language=language,
+        ).get_stream_chain(stream_handler=StreamingLLMCallbackHandler())
+
+        chat_history = processed_request.get("chat_history")
+
+        if check_hello(question):
+            chat_history = ""
+
+        return ConversationalRetrievalStreamingResponse.from_chain(
+            qa_chain,
+            {
+                "question": processed_request.get("question"),
+                "chat_history": chat_history,
+            },
+            media_type="text/event-stream",
+        )
+
+    except Exception as e:
+        logging.exception(e)
+        return {"success": False, "msg": f"{str(e)}"}
 
 
 async def chat_without_docs(request: QARequest) -> str:
