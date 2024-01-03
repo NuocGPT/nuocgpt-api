@@ -19,7 +19,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
     retriever: MergerRetriever
     output_parser: BaseOutputParser = None
 
-    async def acall(
+    async def _acall(
         self,
         inputs: Dict[str, Any],
         run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
@@ -28,8 +28,6 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         question = inputs["question"]
         get_chat_history = self.get_chat_history or _get_chat_history
         chat_history_str = get_chat_history(inputs["chat_history"])
-        dataset = inputs["dataset"]
-
         if chat_history_str:
             callbacks = _run_manager.get_child()
             new_question = await self.question_generator.arun(
@@ -37,7 +35,6 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             )
         else:
             new_question = question
-
         accepts_run_manager = (
             "run_manager" in inspect.signature(self._aget_docs).parameters
         )
@@ -48,13 +45,6 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         else:
             docs, scores = await self._aget_docs(new_question, inputs)  # type: ignore[call-arg]
 
-        if dataset == "diamond" and len(docs) == 0:
-            output = {self.output_key: "NO DATA"}
-            if self.return_source_documents:
-                output["source_documents"] = docs
-            if self.return_generated_question:
-                output["generated_question"] = new_question
-            return output
         new_inputs = inputs.copy()
         if self.rephrase_question:
             new_inputs["question"] = new_question
@@ -62,14 +52,15 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         answer = await self.combine_docs_chain.arun(
             input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs
         )
-
         output: Dict[str, Any] = {self.output_key: answer, "scores": scores}
         if self.return_source_documents:
             output["source_documents"] = docs
         if self.return_generated_question:
             output["generated_question"] = new_question
+
         if self.output_parser is not None:
-            output.update({"answer": self.output_parser.parse(output["answer"])})
+            output.update({"answer": await self.output_parser.aparse(output["answer"])})
+
         return output
 
     async def _aget_docs(
@@ -133,13 +124,9 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                 **kwargs,
             )
 
-        merged_documents, merged_scores = self._reduce_tokens_below_limit_with_score(
+        return self._reduce_tokens_below_limit_with_score(
             merged_documents, merged_scores
         )
-        reordering = LongContextReorder()
-        reordered_docs = reordering.transform_documents(merged_documents)
-        reordered_scores = self._litm_reordering_scores(merged_scores)
-        return reordered_docs, reordered_scores
 
     def _reduce_tokens_below_limit_with_score(
         self, docs: List[Document], scores: List = None
@@ -159,14 +146,3 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                 token_count -= tokens[num_docs]
 
         return docs[:num_docs], scores[:num_docs]
-
-    @staticmethod
-    def _litm_reordering_scores(scores: List = None) -> List[float]:
-        scores.reverse()
-        reordered_result = []
-        for i, value in enumerate(scores):
-            if i % 2 == 1:
-                reordered_result.append(value)
-            else:
-                reordered_result.insert(0, value)
-        return reordered_result

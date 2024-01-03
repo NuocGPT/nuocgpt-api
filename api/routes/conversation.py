@@ -19,7 +19,7 @@ async def get_conversations(user_id: Annotated[dict, Depends(get_user_id)]):
     return paginate(conversations)
 
 
-@router.post("", response_model=Message)
+@router.post("", response_model=Conversation)
 async def add_conversation_data(user_id: Annotated[dict, Depends(get_user_id)], data: AddConversationDto = Body(...)):
     return await add_conversation(user_id, data)
 
@@ -40,9 +40,14 @@ async def get_messages(id: UUID):
     return paginate(messages)
 
 
-@router.post("/{id}/messages", response_model=Message)
+@router.post("/{id}/messages")
 async def add_message_data(user_id: Annotated[dict, Depends(get_user_id)], id: UUID, data: AddMessageDto = Body(...)):
     return await add_message(id, user_id, data)
+
+
+@router.put("/{id}/messages", response_model=Message)
+async def add_answer_data(id: UUID, data: AddAnswerDto = Body(...)):
+    return await add_answer(id, data)
 
 
 @router.get("/{id}/generate-title", response_model=Union[bool, Conversation])

@@ -10,7 +10,7 @@ import openai
 import yaml
 from fastapi import HTTPException
 from langchain import LLMChain
-from langchain.callbacks.manager import CallbackManagerForChainRun
+from langchain.callbacks.manager import AsyncCallbackManager, CallbackManagerForChainRun
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chat_models import ChatOpenAI
@@ -106,6 +106,28 @@ class LangchainOpenAI:
             max_tokens_limit=4000,
             output_parser=self.output_parser,
             return_source_documents=True,
+            return_generated_question=True,
+        )
+
+    def get_stream_chain(self, stream_handler) -> ConversationalRetrievalChain:
+        callback_manager = AsyncCallbackManager([])
+        stream_manager = AsyncCallbackManager([stream_handler])
+
+        prompt_title = "qaPrompt"
+        llm = self.llm_cls(
+            temperature=0, streaming=True, callback_manager=stream_manager
+        )
+        docs_chain = load_qa_chain(llm, prompt=self.data_loader.prompts[prompt_title])
+
+        return CustomConversationalRetrievalChain(
+            retriever=self.vectorstore_retriever,
+            combine_docs_chain=docs_chain,
+            question_generator=LLMChain(
+                llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]
+            ),
+            callback_manager=callback_manager,
+            max_tokens_limit=3500,
+            output_parser=self.output_parser,
             return_generated_question=True,
         )
 
