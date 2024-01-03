@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class AddConversationDto(BaseModel):
     title: Optional[str] = None
     message: str
+    answer: str
 
     class Config:
         json_schema_extra = {
@@ -34,6 +35,23 @@ class UpdateConversationDto(BaseModel):
 
 class AddMessageDto(BaseModel):
     message: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "author_id": "d24beb19-6a51-485d-962f-fd963541f49a",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Hello",    
+                    }
+                ]
+            }
+        }
+
+
+class AddAnswerDto(BaseModel):
+    answer: str
 
     class Config:
         json_schema_extra = {
