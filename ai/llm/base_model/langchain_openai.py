@@ -128,7 +128,6 @@ class LangchainOpenAI:
             callback_manager=callback_manager,
             max_tokens_limit=3500,
             output_parser=self.output_parser,
-            return_source_documents=True,
             return_generated_question=True,
         )
 
