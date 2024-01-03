@@ -55,13 +55,7 @@ async def add_conversation(user_id: UUID, data: AddConversationDto) -> Conversat
         content={"content_type": ContentTypeEnum.text, "parts": [data.message]},
         created_at=datetime.now() - timedelta(seconds=20),
     )
-    system_message = Message(
-        conversation_id=conversation.id,
-        author={"role": AuthorTypeEnum.system},
-        content={"content_type": ContentTypeEnum.text, "parts": [data.answer]},
-        created_at=datetime.now(),
-    )
-    await Message.insert_many([user_message, system_message])
+    await user_message.create()
     return conversation
 
 

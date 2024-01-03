@@ -45,7 +45,7 @@ async def add_message_data(user_id: Annotated[dict, Depends(get_user_id)], id: U
     return await add_message(id, user_id, data)
 
 
-@router.put("/{id}/messages", response_model=Message)
+@router.post("/{id}/answers", response_model=Message)
 async def add_answer_data(id: UUID, data: AddAnswerDto = Body(...)):
     return await add_answer(id, data)
 
