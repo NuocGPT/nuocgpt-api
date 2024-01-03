@@ -25,7 +25,6 @@ emoji==2.8.0
 exceptiongroup==1.1.3
 faiss-cpu==1.7.4
 fastapi==0.95.1
-fastapi-async-langchain==0.5.5
 fastapi-paginate==0.1.0
 filetype==1.2.0
 flatbuffers==23.5.26
