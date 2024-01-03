@@ -6,7 +6,6 @@ from pydantic import BaseModel
 class AddConversationDto(BaseModel):
     title: Optional[str] = None
     message: str
-    answer: str
 
     class Config:
         json_schema_extra = {
