@@ -1,6 +1,4 @@
 import inspect
-import logging
-import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from langchain.callbacks.manager import (
@@ -9,7 +7,6 @@ from langchain.callbacks.manager import (
 )
 from langchain.chains import ConversationalRetrievalChain, StuffDocumentsChain
 from langchain.chains.conversational_retrieval.base import _get_chat_history
-from langchain.document_transformers import LongContextReorder
 from langchain.load.dump import dumpd
 from langchain.retrievers import MergerRetriever
 from langchain.schema import BaseOutputParser, Document

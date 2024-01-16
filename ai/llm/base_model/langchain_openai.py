@@ -51,17 +51,13 @@ class LangchainOpenAI:
         self.chat_history = chat_history
 
         self.data_loader = LangChainDataLoader()
-        print(language)
+
         if language == None:
             self.lang = self._detect_language(question)
         else:
             self.lang = language
 
         vectorstore_folder_path = IngestDataConstants.TEMP_DB_FOLDER
-
-        self.diamond_vts, self.diamond_retriever = self.get_diamond_retriever(
-            f"{vectorstore_folder_path}/diamond_set"
-        )
 
         self.vectorstore, self.vectorstore_retriever = self.get_langchain_retriever(
             vectorstore_folder_path=vectorstore_folder_path
@@ -147,11 +143,22 @@ class LangchainOpenAI:
                 vectorstore=vectorstore,
                 search_type="similarity_score_threshold",
                 search_kwargs=vectorstore_search_kwargs,
-                metadata={"name": "help_center"},
+                metadata={"name": "normal_vectorstore"},
+            )
+
+            diamond_vectorstore = FAISS.load_local(
+                folder_path=f"{vectorstore_folder_path}/diamond_set",
+                embeddings=embeddings,
+            )
+            diamond_vectorestore_retriever = CustomVectorStoreRetriever(
+                vectorstore=diamond_vectorstore,
+                search_type="similarity_score_threshold",
+                search_kwargs=vectorstore_search_kwargs,
+                metadata={"name": "diamond_dataset"},
             )
 
             final_vectorstore_retriever = MergerRetriever(
-                retrievers=[vectorestore_retriever],
+                retrievers=[diamond_vectorestore_retriever, vectorestore_retriever],
             )
 
             return vectorstore, final_vectorstore_retriever
@@ -189,34 +196,6 @@ class LangchainOpenAI:
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Error when loading diamond vectorstore, {e}"
-            )
-
-    @staticmethod
-    def get_sensor_lib_retriever(
-        sensor_lib_vts_folder_path: str, rspl_vts_search_kwargs: dict = None
-    ) -> MergerRetriever:
-        if rspl_vts_search_kwargs is None:
-            rspl_vts_search_kwargs = {"k": 1, "score_threshold": 0.3}
-
-        try:
-            embeddings = openai_embedding_with_backoff()
-
-            if os.path.exists(f"{sensor_lib_vts_folder_path}/index.faiss"):
-                sensor_lib_vectorstore = FAISS.load_local(
-                    sensor_lib_vts_folder_path, embeddings
-                )
-
-                sensor_lib_retriever = CustomVectorStoreRetriever(
-                    vectorstore=sensor_lib_vectorstore,
-                    search_type="similarity_score_threshold",
-                    search_kwargs=rspl_vts_search_kwargs,
-                    metadata={"name": "sensor_lib"},
-                )
-
-            return MergerRetriever(retrievers=[sensor_lib_retriever])
-        except Exception as e:  # noqa
-            raise HTTPException(
-                status_code=500, detail=f"Error when loading sensorlib. {e}"
             )
 
     @staticmethod
@@ -281,56 +260,3 @@ class LangchainOpenAI:
                 result += json.dumps(info, indent=4).replace("{", "<").replace("}", ">")
                 result += "\n\n"
         return result
-
-    async def query_relevant_answers(self, question):
-        self.relevant_answer = ""
-
-        if self.sensor_lib_vts_retriever:
-            try:
-                # Get the results of all retrievers.
-                retriever_docs = [
-                    (
-                        retriever.get_relevant_documents(
-                            question,
-                            callbacks=CallbackManagerForChainRun.get_noop_manager().get_child(
-                                "retriever_{}".format(i + 1)
-                            ),
-                        ),
-                        retriever.metadata["name"],
-                    )
-                    for i, retriever in enumerate(
-                        self.sensor_lib_vts_retriever.retrievers
-                    )
-                ]
-
-                # Merge the results of the retrievers.
-                merged_documents = []
-                merged_scores = []
-
-                max_docs = max(len(docs[0]) for docs in retriever_docs)
-                for i in range(max_docs):
-                    for retriever, doc_with_score in zip(
-                        self.sensor_lib_vts_retriever.retrievers, retriever_docs
-                    ):
-                        if i < len(doc_with_score[0]):
-                            merged_documents.append(doc_with_score[0][i][0])
-                            merged_scores.append(
-                                {
-                                    "tag": doc_with_score[1],
-                                    "score": doc_with_score[0][i][1],
-                                }
-                            )
-
-            except Exception as e:
-                logging.warn(e)
-
-            relevant_questions = merged_documents
-            if len(relevant_questions) > 0:
-                source = relevant_questions[0].metadata["source"].replace("\\", "/")
-                relevant_question_id = source.split("/")[-2]
-                query = await SensorDataLib.find_one(
-                    SensorDataLib.id == UUID(relevant_question_id)
-                )
-                if query:
-                    self.relevant_answer = query.answer
-                    self.score = merged_scores[0]["score"]
