@@ -16,7 +16,7 @@ class RoleEnum(str, Enum):
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
     email: Optional[EmailStr]
-    phone_number: str
+    phone_number: Optional[str]
     password: Optional[str]
     roles: List[RoleEnum] = [RoleEnum.user]
     is_verified: bool = False
