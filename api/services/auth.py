@@ -8,6 +8,7 @@ from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
 from api.schemas.auth import *
 from config.constants import ErrorMessage
 from api.services.mail import send_otp, send_otp_forgot_password
+from api.services.twilio import send_otp_sms
 from api.utils.string import generateOTP
 from config.config import Settings
 
@@ -32,6 +33,26 @@ async def user_signin(data: SignInDto = Body(...)):
         raise HTTPException(status_code=401, detail=ErrorMessage.INCORRECT_EMAIL_OR_PASSWORD)
 
     raise HTTPException(status_code=401, detail=ErrorMessage.INCORRECT_EMAIL_OR_PASSWORD)
+
+
+async def user_sign_in_with_phone_number(data: PhoneNumberSignInDto = Body(...)):
+    user = await User.find_one(User.phone_number == data.phone_number)
+    if not user:
+        new_user = User(
+            phone_number=data.phone_number,
+            roles=[RoleEnum.user],
+            created_at=datetime.now()
+        )
+
+        user = await new_user.create()
+        
+    if not user.verify_code or user.verify_code_expire < datetime.now():
+        # verify_code = generateOTP(6)
+        verify_code = 123456
+        await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
+        # send_otp_sms(user.phone_number, verify_code)
+
+    return True
 
 
 async def user_signup(data: SignUpDto = Body(...)):
@@ -92,14 +113,42 @@ async def verify_otp(data: VerifyOTPDto = Body(...)):
     raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
 
 
+async def sms_verify_otp(data: SmsVerifyOTPDto = Body(...)):
+    user = await User.find_one(User.phone_number == data.phone_number)
+    if not user:
+        raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
+
+    if user.verify_code == data.verify_code and user.verify_code_expire >= datetime.now():
+        await user.update({"$set": { "is_verified": True }})
+        return {"access_token": sign_jwt(str(user.id)), "roles": user.roles}
+
+    raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
+
+
 async def resend_verify_otp(data: SendVerifyOTPDto = Body(...)):
     user = await User.find_one(User.email == data.email)
     if not user:
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
 
-    verify_code = generateOTP(6)
-    await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
-    send_otp(user.email, verify_code)
+    if user.verify_code_expire < datetime.now():
+        verify_code = generateOTP(6)
+        await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
+        send_otp(user.email, verify_code)
+
+    return True
+
+
+async def resend_sms_verify_otp(data: ReSendSMSVerifyOTPDto = Body(...)):
+    user = await User.find_one(User.phone_number == data.phone_number)
+    if not user:
+        raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
+
+    if user.verify_code_expire < datetime.now():
+        # verify_code = generateOTP(6)
+        verify_code = 123456
+        await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
+        # send_otp(user.email, verify_code)
+
     return True
 
 

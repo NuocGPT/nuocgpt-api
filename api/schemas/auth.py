@@ -75,3 +75,38 @@ class ForgotPasswordDto(BaseModel):
                 "password": "enosta@123",
             }
         }
+
+
+class PhoneNumberSignInDto(BaseModel):
+    phone_number: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "phone_number": "+84987654321",
+            }
+        }
+
+
+class ReSendSMSVerifyOTPDto(BaseModel):
+    phone_number: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "phone_number": "+84911793246",
+            }
+        }
+
+
+class SmsVerifyOTPDto(BaseModel):
+    phone_number: str
+    verify_code: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "phone_number": "+84911793246",
+                "verify_code": "095648",
+            }
+        }
