@@ -14,6 +14,11 @@ async def sign_in(data: SignInDto = Body(...)):
     return await user_signin(data)
 
 
+@router.post("/sign-in-with-phone-number")
+async def sign_in_with_phone_number(data: PhoneNumberSignInDto = Body(...)):
+    return await user_sign_in_with_phone_number(data)
+
+
 @router.post("/sign-up")
 async def sign_up(data: SignInDto = Body(...)):
     return await user_signup(data)
@@ -24,9 +29,19 @@ async def verify_otp_verification(data: VerifyOTPDto = Body(...)):
     return await verify_otp(data)
 
 
+@router.post("/sms_verify-otp")
+async def sms_verify_otp_verification(data: SmsVerifyOTPDto = Body(...)):
+    return await sms_verify_otp(data)
+
+
 @router.post("/resend-verify-otp")
 async def resend_verify_otp_verification(data: SendVerifyOTPDto = Body(...)):
     return await resend_verify_otp(data)
+
+
+@router.post("/resend-sms-verify-otp")
+async def resend_sms_verify_otp_verification(data: ReSendSMSVerifyOTPDto = Body(...)):
+    return await resend_sms_verify_otp(data)
 
 
 @router.post("/send-verify-otp-forgot-password")

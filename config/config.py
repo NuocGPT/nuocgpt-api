@@ -25,7 +25,11 @@ class Settings(BaseSettings):
     SMTP_PORT: str = "smtp_port"
     SMTP_USER: str = "smtp_user"
     SMTP_PASS: str = "smtp_pass"
-    SMTP_OTP_EXPIRES_MINUTES: int = 10
+    SMTP_OTP_EXPIRES_MINUTES: int = 5
+
+    # Twilio
+    TWILIO_ACCOUNT_SID: str = "twilio_account_sid"
+    TWILIO_AUTH_TOKEN: str = "twilio_auth_token"
 
     class Config:
         env_file = ".env"

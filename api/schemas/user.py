@@ -1,11 +1,12 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 from api.models.user import RoleEnum
 
 class UserResponse(BaseModel):
-    email: EmailStr
+    email: Optional[EmailStr]
+    phone_number: Optional[str]
     roles: List[RoleEnum]
 
     class Config:

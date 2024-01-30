@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 from uuid import UUID, uuid4
-from beanie import Document, Indexed
+from beanie import Document
 from pydantic import EmailStr, Field
 from datetime import datetime, timedelta
 
@@ -15,8 +15,9 @@ class RoleEnum(str, Enum):
 
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
-    email: Indexed(EmailStr, unique=True)
-    password: str
+    email: Optional[EmailStr]
+    phone_number: str
+    password: Optional[str]
     roles: List[RoleEnum] = [RoleEnum.user]
     is_verified: bool = False
     verify_code: str = None
