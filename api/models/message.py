@@ -13,7 +13,7 @@ class AuthorTypeEnum(str, Enum):
 
 
 class Author(BaseModel):
-    id: Optional[UUID]
+    id: Optional[UUID] = None
     role: AuthorTypeEnum
 
 

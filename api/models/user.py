@@ -15,12 +15,12 @@ class RoleEnum(str, Enum):
 
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
-    email: Optional[EmailStr]
-    phone_number: Optional[str]
-    password: Optional[str]
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    password: Optional[str] = None
     roles: List[RoleEnum] = [RoleEnum.user]
     is_verified: bool = False
-    verify_code: Optional[str] = None
+    verify_code: Optional[int] = None
     verify_code_expire: datetime = datetime.now() + timedelta(
         minutes=Settings().SMTP_OTP_EXPIRES_MINUTES
     )
