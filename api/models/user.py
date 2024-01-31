@@ -20,11 +20,11 @@ class User(Document):
     password: Optional[str]
     roles: List[RoleEnum] = [RoleEnum.user]
     is_verified: bool = False
-    verify_code: str | None = None
+    verify_code: Optional[str] = None
     verify_code_expire: datetime = datetime.now() + timedelta(
         minutes=Settings().SMTP_OTP_EXPIRES_MINUTES
     )
-    verify_token: str | None = None
+    verify_token: Optional[str] = None
     created_at: datetime = datetime.now()
 
     class Config:
