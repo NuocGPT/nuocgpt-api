@@ -38,8 +38,8 @@ async def start_database():
     await initiate_database()
 
 
-s3_client = AWSService()
-s3_client.download_from_s3()
+# s3_client = AWSService()
+# s3_client.download_from_s3()
 
 
 @app.get("/", tags=["Root"])
