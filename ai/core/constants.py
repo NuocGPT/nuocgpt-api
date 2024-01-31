@@ -1,23 +1,28 @@
 import os
 from typing import Dict, Type, Union
-from langchain.llms import BaseLLM, type_to_cls_dict
-from langchain.chat_models import ChatOpenAI
+
 from config.config import Settings
+from langchain.llms import BaseLLM, type_to_cls_dict
+from langchain_openai import ChatOpenAI
 
 
 class BaseConstants:
     ROOT_PATH = os.path.abspath(os.path.join(__file__, "../.."))
 
+
 class IngestDataConstants(BaseConstants):
     CHUNK_SIZE = 4000
     CHUNK_OVERLAP = 500
-    TEMP_DB_FOLDER = 'files/vectorstores/'
+    TEMP_DB_FOLDER = "files/vectorstores/"
     MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
     ALLOWED_EXTENSIONS = ["pdf", "json"]
-    TEMP_UPLOADED_FOLDER = 'tmp/uploaded/'
+    TEMP_UPLOADED_FOLDER = "tmp/uploaded/"
+
 
 class LangChainOpenAIConstants(BaseConstants):
-    type_to_cls_dict_plus: Dict[str, Type[Union[BaseLLM, ChatOpenAI]]] = {k: v for k, v in type_to_cls_dict.items()}
+    type_to_cls_dict_plus: Dict[str, Type[Union[BaseLLM, ChatOpenAI]]] = {
+        k: v for k, v in type_to_cls_dict.items()
+    }
     type_to_cls_dict_plus.update({"chat_openai": ChatOpenAI})
     AGENT_SYSTEM_PROMPT_CONTENT = (
         "Do your best to answer the questions. "

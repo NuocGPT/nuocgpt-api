@@ -8,7 +8,8 @@ from langchain.callbacks.manager import (
 )
 from langchain.schema import BaseRetriever, Document
 from langchain.vectorstores import VectorStore
-from pydantic import Field, root_validator
+from pydantic import Field
+from pydantic.v1 import root_validator
 
 
 class CustomVectorStoreRetriever(BaseRetriever):
