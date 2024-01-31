@@ -137,3 +137,4 @@ Scripts
 include
 pyvenv.cfg
 files
+ai/data
