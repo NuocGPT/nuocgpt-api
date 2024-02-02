@@ -57,3 +57,7 @@ async def verify_fotgot_password(data: VerifyOTPDto = Body(...)):
 @router.post("/new-password-forgot-password")
 async def add_new_password_data(data: ForgotPasswordDto = Body(...)):
     return await add_new_password(data)
+
+@router.get("/user-seeding")
+async def user_seeding():
+    return await seeding()
