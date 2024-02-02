@@ -29,6 +29,10 @@ from langchain.vectorstores.qdrant import Qdrant
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 os.environ["OPENAI_API_KEY"] = Settings().OPENAI_API_KEY
+os.environ["LANGCHAIN_TRACING_V2"] = Settings().LANGCHAIN_TRACING_V2
+os.environ["LANGCHAIN_API_KEY"] = Settings().LANGCHAIN_API_KEY
+os.environ["LANGCHAIN_ENDPOINT"] = Settings().LANGCHAIN_ENDPOINT
+os.environ["LANGCHAIN_PROJECT"] = Settings().LANGCHAIN_PROJECT
 client = qdrant_client.QdrantClient(
     path=f"{IngestDataConstants.TEMP_DB_FOLDER}/sensor_data_lib"
 )

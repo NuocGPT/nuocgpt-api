@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY: str = "aws_access_key"
     AWS_S3_BUCKET: str = "aws_bucket"
     AWS_REGION: str = "aws_region"
+    LANGCHAIN_API_KEY: str = "langchain_api_key"
+    LANGCHAIN_ENDPOINT: str = "langchain_endpoint"
+    LANGCHAIN_TRACING_V2: str = "is_tracing"
+    LANGCHAIN_PROJECT: str = "project"
 
     # Mail
     SMTP_HOST: str = "smtp_host"

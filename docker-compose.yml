@@ -19,6 +19,10 @@ services:
       SMTP_PASS: knnomsfsyqllxpag
       TWILIO_ACCOUNT_SID: AC3afbb6b9f254002e3e696202378bd77a
       TWILIO_AUTH_TOKEN: 6f67302ed6b2c8f52dc393ed31af58f6
+      LANGCHAIN_API_KEY: ls__6a6469c179114dd09969b6f5c81596e1
+      LANGCHAIN_ENDPOINT: https://api.smith.langchain.com
+      LANGCHAIN_TRACING_V2: true
+      LANGCHAIN_PROJECT: nuoc-gpt
     depends_on:
       - mongodb
     volumes:
