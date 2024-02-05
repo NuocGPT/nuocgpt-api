@@ -7,30 +7,38 @@ from uuid import UUID
 
 import backoff
 import openai
+import qdrant_client
 import yaml
-from fastapi import HTTPException
-from langchain import LLMChain
-from langchain.callbacks.manager import AsyncCallbackManager, CallbackManagerForChainRun
-from langchain.chains import ConversationalRetrievalChain
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.retrievers import MergerRetriever
-from langchain.schema import HumanMessage
-from langchain.vectorstores import FAISS
-from langchain.vectorstores.base import VectorStore
-
 from ai.core.constants import IngestDataConstants, LangChainOpenAIConstants
 from ai.llm.base_model.retrieval_chain import CustomConversationalRetrievalChain
 from ai.llm.data_loader.load_langchain_config import LangChainDataLoader
 from ai.llm.data_loader.vectorestore_retriever import CustomVectorStoreRetriever
-from ai.schemas.db_model import SensorDataLib
 from config.config import Settings
+from fastapi import HTTPException
+from langchain import LLMChain
+from langchain.callbacks.manager import AsyncCallbackManager, CallbackManagerForChainRun
+from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.query_constructor.base import AttributeInfo
+from langchain.chains.question_answering import load_qa_chain
+from langchain.retrievers import MergerRetriever
+from langchain.retrievers.self_query.base import SelfQueryRetriever
+from langchain.schema import HumanMessage
+from langchain.vectorstores import FAISS
+from langchain.vectorstores.base import VectorStore
+from langchain.vectorstores.qdrant import Qdrant
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 os.environ["OPENAI_API_KEY"] = Settings().OPENAI_API_KEY
+os.environ["LANGCHAIN_TRACING_V2"] = Settings().LANGCHAIN_TRACING_V2
+os.environ["LANGCHAIN_API_KEY"] = Settings().LANGCHAIN_API_KEY
+os.environ["LANGCHAIN_ENDPOINT"] = Settings().LANGCHAIN_ENDPOINT
+os.environ["LANGCHAIN_PROJECT"] = Settings().LANGCHAIN_PROJECT
+client = qdrant_client.QdrantClient(
+    path=f"{IngestDataConstants.TEMP_DB_FOLDER}/sensor_data_lib"
+)
 
 
-@backoff.on_exception(backoff.expo, openai.error.RateLimitError)
+@backoff.on_exception(backoff.expo, openai.RateLimitError)
 def openai_embedding_with_backoff():
     return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
 
@@ -108,7 +116,6 @@ class LangchainOpenAI:
     def get_stream_chain(self, stream_handler) -> ConversationalRetrievalChain:
         callback_manager = AsyncCallbackManager([])
         stream_manager = AsyncCallbackManager([stream_handler])
-
         prompt_title = "qaPrompt"
         llm = self.llm_cls(
             temperature=0, streaming=True, callback_manager=stream_manager
@@ -127,9 +134,8 @@ class LangchainOpenAI:
             return_generated_question=True,
         )
 
-    @staticmethod
     def get_langchain_retriever(
-        vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None
+        self, vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None
     ) -> Tuple[VectorStore, MergerRetriever]:
         if vectorstore_search_kwargs is None:
             vectorstore_search_kwargs = {"k": 5, "score_threshold": 0.3}
@@ -157,15 +163,58 @@ class LangchainOpenAI:
                 metadata={"name": "diamond_dataset"},
             )
 
+            sensor_lib_vectorstore = Qdrant(
+                client=client,
+                collection_name="sensor_data_lib",
+                embeddings=embeddings,
+            )
+
+            metadata_field_info = [
+                AttributeInfo(
+                    name="time",
+                    description="The timestamp that we want to get value of",
+                    type="integer",
+                ),
+                AttributeInfo(
+                    name="parameter",
+                    description="The measurement metric that we want to get value",
+                    type="string",
+                ),
+                AttributeInfo(
+                    name="unit",
+                    description="The measurement unit of desired value",
+                    type="string",
+                ),
+                AttributeInfo(
+                    name="location",
+                    description="The location name where we want to get data of",
+                    type="string",
+                ),
+            ]
+            document_content_description = (
+                "The collected sensor data from various locations at various timestamps"
+            )
+            sensor_lib_vectorstore_retriever = SelfQueryRetriever.from_llm(
+                self.llm_model,
+                sensor_lib_vectorstore,
+                document_content_description,
+                metadata_field_info,
+                metadata={"name": "sensor_data_lib"},
+            )
+
             final_vectorstore_retriever = MergerRetriever(
-                retrievers=[diamond_vectorestore_retriever, vectorestore_retriever],
+                retrievers=[
+                    diamond_vectorestore_retriever,
+                    sensor_lib_vectorstore_retriever,
+                    vectorestore_retriever,
+                ],
             )
 
             return vectorstore, final_vectorstore_retriever
 
         except Exception as e:
             raise HTTPException(
-                status_code=500, detail="Error when loading vectorstore"
+                status_code=500, detail=f"Error when loading vectorstore, {e}"
             )
 
     @staticmethod

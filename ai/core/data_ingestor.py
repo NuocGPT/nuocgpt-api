@@ -1,40 +1,46 @@
 import logging
 import os
 import time
-
-
 from typing import List, Text, Tuple
-
-from langchain.document_loaders import PyPDFium2Loader, UnstructuredFileLoader, UnstructuredExcelLoader, CSVLoader
-from langchain.text_splitter import TokenTextSplitter
-from langchain.vectorstores import FAISS
-
-from llama_index import download_loader
 
 from ai.core.constants import IngestDataConstants
 from ai.llm.base_model.langchain_openai import openai_embedding_with_backoff
+from langchain.document_loaders import (
+    CSVLoader,
+    PyPDFium2Loader,
+    UnstructuredExcelLoader,
+    UnstructuredFileLoader,
+)
+from langchain.text_splitter import TokenTextSplitter
+from langchain.vectorstores import FAISS
+
 
 class DataIngestor:
     """Ingest data with different format to create vectorstore"""
+
     def __init__(self, lang: str = ""):
         self.lang = lang
         self.vectorstore_path = IngestDataConstants.TEMP_DB_FOLDER
-        self.sensor_data_lib_path = os.path.join(self.vectorstore_path, "sensor_data_lib")
+        self.sensor_data_lib_path = os.path.join(
+            self.vectorstore_path, "sensor_data_lib"
+        )
 
     def create_vectorstore(self) -> Tuple[Text, Text]:
         try:
             if not os.path.exists(self.vectorstore_path):
                 os.makedirs(self.vectorstore_path)
-           
+
             if not os.path.exists(self.sensor_data_lib_path):
-                    os.makedirs(self.sensor_data_lib_path)
+                os.makedirs(self.sensor_data_lib_path)
 
         except Exception as e:
             logging.exception(e)
         finally:
             return self.vectorstore_path, self.sensor_data_lib_path
-        
-    def _save_vectorstore(self, raw_documents: List, vectorstore_path: Text, id: str = None):
+
+    def _save_vectorstore(
+        self, raw_documents: List, vectorstore_path: Text, id: str = None
+    ):
         text_splitter = TokenTextSplitter(
             model_name="gpt-3.5-turbo",
             chunk_size=IngestDataConstants.CHUNK_SIZE,
@@ -56,10 +62,10 @@ class DataIngestor:
                 vectorstore = FAISS.from_texts(texts, embeddings, ids=[id])
             else:
                 vectorstore = FAISS.from_texts(texts, embeddings)
-        
+
         vectorstore.save_local(vectorstore_path)
         time.sleep(60)
-        
+
     def ingest_pdf(self, pdf_path: Text):
         vectorstore_path = self.create_vectorstore()[0]
 
@@ -67,17 +73,6 @@ class DataIngestor:
         raw_documents = loader.load()
 
         self._save_vectorstore(raw_documents, vectorstore_path)
-
-    
-    def ingest_json(self, json_path: list):
-        vectorstore_path = self.create_vectorstore()[0]
-
-        JSONReader = download_loader("JSONReader")
-        loader = JSONReader()
-        documents = loader.load_data(json_path)
-        langchain_documents = [d.to_langchain_format() for d in documents]
-
-        self._save_vectorstore(langchain_documents, vectorstore_path)
 
     def ingest_excel(self, xlsx_path: str):
         vectorstore_path = self.create_vectorstore()[0]

@@ -1,28 +1,30 @@
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID, uuid4
-from beanie import Document
-from pydantic import EmailStr, Field
-from datetime import datetime, timedelta
 
+from beanie import Document, Indexed
 from config.config import Settings
+from pydantic import EmailStr, Field
 
 
 class RoleEnum(str, Enum):
-    user = 'user'
-    admin = 'admin'
+    user = "user"
+    admin = "admin"
 
 
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
-    email: Optional[EmailStr]
-    phone_number: Optional[str]
-    password: Optional[str]
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    password: Optional[str] = None
     roles: List[RoleEnum] = [RoleEnum.user]
     is_verified: bool = False
-    verify_code: str = None
-    verify_code_expire: datetime = datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES)
-    verify_token: str = None
+    verify_code: Optional[int] = None
+    verify_code_expire: datetime = datetime.now() + timedelta(
+        minutes=Settings().SMTP_OTP_EXPIRES_MINUTES
+    )
+    verify_token: Optional[str] = None
     created_at: datetime = datetime.now()
 
     class Config:

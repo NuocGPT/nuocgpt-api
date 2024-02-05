@@ -78,6 +78,23 @@ async def user_signup(data: SignUpDto = Body(...)):
 
 
 async def seeding():
+    for x in range(50):
+        user_exists = await User.find_one(User.email == 'nuocuser{0}@nuocgpt.ai'.format(x + 1))
+        if not user_exists:
+            password = hash_helper.encrypt("Nuocgpt@123")
+            new_user = User(
+                email='nuocuser{0}@nuocgpt.ai'.format(x + 1),
+                password=password,
+                roles=[RoleEnum.user],
+                is_verified=True,
+                created_at=datetime.now()
+            )
+
+            await new_user.create()
+    return {"status": True}
+
+
+async def export():
     user_messages = await Message.find(Message.created_at > datetime.today() - timedelta(days=14), Message.author.role == 'user').sort("created_at").to_list()
     workbook = xlsxwriter.Workbook('data.xlsx')
     worksheet = workbook.add_worksheet()

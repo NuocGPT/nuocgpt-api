@@ -17,22 +17,22 @@ class TagEnum(str, Enum):
 
 
 class FeedbackConversation(BaseModel):
-    id: Optional[UUID]
+    id: Optional[UUID] = None
     title: str
 
 
 class FeedbackQuestion(BaseModel):
-    id: Optional[UUID]
+    id: Optional[UUID] = None
     content: str
 
 
 class FeedbackMessage(BaseModel):
-    id: Optional[UUID]
+    id: Optional[UUID] = None
     content: str
 
 
 class FeedbackUser(BaseModel):
-    id: Optional[UUID]
+    id: Optional[UUID] = None
     email: EmailStr
 
 
@@ -41,10 +41,10 @@ class Feedback(Document):
     conversation: FeedbackConversation
     question: FeedbackQuestion
     message: FeedbackMessage
-    user: Optional[FeedbackUser]
+    user: Optional[FeedbackUser] = None
     rating: RatingEnum
-    tags: Optional[List[TagEnum]]
-    text: Optional[str]
+    tags: Optional[List[TagEnum]] = None
+    text: Optional[str] = None
     created_at: datetime = datetime.now()
 
     class Config:

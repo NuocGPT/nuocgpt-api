@@ -35,17 +35,18 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
         accepts_run_manager = (
             "run_manager" in inspect.signature(self._aget_docs).parameters
         )
+
         if accepts_run_manager:
             docs, scores = await self._aget_docs(
                 new_question, inputs, run_manager=_run_manager
             )
         else:
             docs, scores = await self._aget_docs(new_question, inputs)  # type: ignore[call-arg]
-
         new_inputs = inputs.copy()
         if self.rephrase_question:
             new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str
+
         answer = await self.combine_docs_chain.arun(
             input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs
         )
@@ -107,10 +108,19 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             for i in range(max_docs):
                 for _, doc_with_score in zip(self.retriever.retrievers, retriever_docs):
                     if i < len(doc_with_score[0]):
-                        merged_documents.append(doc_with_score[0][i][0])
-                        merged_scores.append(
-                            {"tag": doc_with_score[1], "score": doc_with_score[0][i][1]}
-                        )
+                        if isinstance(doc_with_score[0][i], tuple):
+                            merged_documents.append(doc_with_score[0][i][0])
+                            merged_scores.append(
+                                {
+                                    "tag": doc_with_score[1],
+                                    "score": doc_with_score[0][i][1],
+                                }
+                            )
+                        else:
+                            merged_documents.append(doc_with_score[0][i])
+                            merged_scores.append(
+                                {"tag": doc_with_score[1], "score": 100}
+                            )
 
         except Exception as e:
             run_manager.on_retriever_error(e)

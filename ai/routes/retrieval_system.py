@@ -1,19 +1,22 @@
 import asyncio
-import csv
+import json
 import logging
 import os
+import re
+import time
+from datetime import datetime
 
+import qdrant_client
+from ai.core.constants import IngestDataConstants, LangChainOpenAIConstants
+from ai.core.data_ingestor import DataIngestor
+from ai.llm.base_model.langchain_openai import openai_embedding_with_backoff
+from ai.schemas.schemas import ImportFileRequest, ImportMultipleFilesRequest
+from config.config import Settings
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
-
-from ai.core.constants import IngestDataConstants
-from ai.core.data_ingestor import DataIngestor
-from ai.schemas.schemas import (
-    ImportFileRequest,
-    ImportMultipleFilesRequest,
-    ImportSensorDataRequest,
-)
-from config.config import Settings
+from langchain.docstore.document import Document
+from langchain.text_splitter import TokenTextSplitter
+from langchain_community.vectorstores.qdrant import Qdrant
 
 OPENAI_API_KEY = Settings().OPENAI_API_KEY
 MAX_FILE_SIZE = IngestDataConstants.MAX_FILE_SIZE
@@ -101,19 +104,77 @@ async def import_sensor_data_question(question: str, id: str):
 
 
 async def import_data():
-    try:
-        with open("files/sensordata.csv", "r", encoding="utf-8") as file:
-            csvreader = csv.reader(file)
-            data = []
-            for row in csvreader:
-                data.append({"id": row[0], "question": row[1]})
+    root_path = os.path.join(
+        LangChainOpenAIConstants.ROOT_PATH,
+        "data/JSON",
+    )
+    vectorstore_path = os.path.join(
+        IngestDataConstants.TEMP_DB_FOLDER, "sensor_data_lib"
+    )
+    # embeddings = openai_embedding_with_backoff()
 
-        for idx, question in enumerate(data):
-            print("INDEX", idx)
-            await import_sensor_data_question(question["question"], question["id"])
-        print("DONE")
-    except Exception as e:
-        logging.error(e)
+    # if os.path.exists(f"{vectorstore_path}/meta.json"):
+    #     client = qdrant_client.QdrantClient(path=vectorstore_path)
+    #     vectorstore = Qdrant(
+    #         client=client, collection_name="sensor_data_lib", embeddings=embeddings
+    #     )
+    # else:
+    #     vectorstore = None
+
+    # for file in os.listdir(root_path)[:3]:
+    #     path = os.path.join(root_path, file)
+    #     docs = []
+    #     with open(
+    #         path,
+    #         encoding="utf-8",
+    #     ) as f:
+    #         data = json.loads(f.read())
+
+    #     param = data["Parameter"]
+    #     location = data["Location"]
+    #     unit = data["Unit"]
+
+    #     for obj in data["Data"]:
+    #         metadata = {}
+    #         metadata["source"] = path
+
+    #         timestamp = datetime.strptime(
+    #             re.sub(r"T[0-9][0-9]:[0-9][0-9]:*[0-9]*[0-9]*Z", "", obj.get("Time")),
+    #             "%Y-%m-%d",
+    #         )
+    #         try:
+    #             time_to_timestamp = datetime.timestamp(timestamp)
+    #             metadata["time"] = time_to_timestamp
+    #             metadata["parameter"] = param
+    #             metadata["location"] = location
+    #             metadata["unit"] = unit
+
+    #             docs.append(Document(page_content=obj["Value"], metadata=metadata))
+    #         except Exception as e:
+    #             print(f"error in {file}, {obj['Time']}")
+    #             pass
+
+    #     text_splitter = TokenTextSplitter(
+    #         model_name="gpt-3.5-turbo",
+    #         chunk_size=IngestDataConstants.CHUNK_SIZE,
+    #         chunk_overlap=IngestDataConstants.CHUNK_OVERLAP,
+    #     )
+
+    #     splitted_documents = text_splitter.split_documents(docs)
+
+    #     if vectorstore:
+    #         vectorstore.add_documents(splitted_documents)
+    #     else:
+    #         vectorstore = Qdrant.from_documents(
+    #             docs,
+    #             embeddings,
+    #             path=vectorstore_path,
+    #             collection_name="sensor_data_lib",
+    #         )
+
+    #     print(f"Ingest succesfully {file}")
+    #     time.sleep(30)
+    print("DONE")
 
 
 def add_data():

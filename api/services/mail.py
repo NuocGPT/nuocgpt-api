@@ -35,13 +35,13 @@ def get_otp_message(otp: str):
     return MIMEText(html.format(otp), "html")
 
 
-def send_otp(email: str, verify_code: str):
+def send_otp(email: str, verify_code: int):
     message = get_otp_message(verify_code)
     send_mail("OTP verification", email, message)
     return True
 
 
-def send_otp_forgot_password(email: str, verify_code: str):
+def send_otp_forgot_password(email: str, verify_code: int):
     message = get_otp_message(verify_code)
     send_mail("Forgot Password", email, message)
     return True

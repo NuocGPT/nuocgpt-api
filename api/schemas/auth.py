@@ -29,7 +29,7 @@ class SignUpDto(BaseModel):
 
 class VerifyOTPDto(BaseModel):
     email: EmailStr
-    verify_code: str
+    verify_code: int
 
     class Config:
         json_schema_extra = {
@@ -101,7 +101,7 @@ class ReSendSMSVerifyOTPDto(BaseModel):
 
 class SmsVerifyOTPDto(BaseModel):
     phone_number: str
-    verify_code: str
+    verify_code: int
 
     class Config:
         json_schema_extra = {
