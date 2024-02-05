@@ -47,10 +47,9 @@ async def user_sign_in_with_phone_number(data: PhoneNumberSignInDto = Body(...))
         user = await new_user.create()
         
     if not user.verify_code or user.verify_code_expire < datetime.now():
-        # verify_code = generateOTP(6)
-        verify_code = 123456
+        verify_code = generateOTP(6)
         await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
-        # send_otp_sms(user.phone_number, verify_code)
+        send_otp_sms(user.phone_number, verify_code)
 
     return True
 
@@ -144,10 +143,9 @@ async def resend_sms_verify_otp(data: ReSendSMSVerifyOTPDto = Body(...)):
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
 
     if user.verify_code_expire < datetime.now():
-        # verify_code = generateOTP(6)
-        verify_code = 123456
+        verify_code = generateOTP(6)
         await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
-        # send_otp(user.email, verify_code)
+        send_otp_sms(user.phone_number, verify_code)
 
     return True
 
