@@ -118,7 +118,11 @@ class LangchainOpenAI:
         stream_manager = AsyncCallbackManager([stream_handler])
         prompt_title = "qaPrompt"
         llm = self.llm_cls(
-            temperature=0, streaming=True, callback_manager=stream_manager
+            temperature=0,
+            streaming=True,
+            callback_manager=stream_manager,
+            model_name="gpt-4-0125-preview",
+            request_timeout=600,
         )
         docs_chain = load_qa_chain(llm, prompt=self.data_loader.prompts[prompt_title])
 
@@ -129,7 +133,7 @@ class LangchainOpenAI:
                 llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]
             ),
             callback_manager=callback_manager,
-            max_tokens_limit=3500,
+            max_tokens_limit=64000,
             output_parser=self.output_parser,
             return_generated_question=True,
         )

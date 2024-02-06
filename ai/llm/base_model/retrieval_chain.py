@@ -88,17 +88,39 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             **kwargs,
         )
         try:
-            # Get the results of all retrievers.
-            retriever_docs = [
-                (
-                    await retriever.aget_relevant_documents(
-                        question,
-                        callbacks=run_manager.get_child("retriever_{}".format(i + 1)),
-                    ),
-                    retriever.metadata["name"],
-                )
-                for i, retriever in enumerate(self.retriever.retrievers)
-            ]
+            retriever_docs = []
+            for i, retriever in enumerate(self.retriever.retrievers):
+                # Get the results of all retrievers.
+                if retriever.metadata["name"] != "sensor_data_lib":
+                    retriever_docs.append(
+                        (
+                            await retriever.aget_relevant_documents(
+                                question,
+                                callbacks=run_manager.get_child(
+                                    "retriever_{}".format(i + 1)
+                                ),
+                            ),
+                            retriever.metadata["name"],
+                        )
+                    )
+                else:
+                    try:
+                        sensor_retrieved_data = await retriever.aget_relevant_documents(
+                            question,
+                            callbacks=run_manager.get_child(
+                                "retriever_{}".format(i + 1)
+                            ),
+                        )
+
+                        if len(sensor_retrieved_data) != 0:
+                            retriever_docs.append(
+                                (
+                                    sensor_retrieved_data,
+                                    retriever.metadata["name"],
+                                )
+                            )
+                    except Exception as e:
+                        pass
 
             # Merge the results of the retrievers.
             merged_documents = []
@@ -119,7 +141,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                         else:
                             merged_documents.append(doc_with_score[0][i])
                             merged_scores.append(
-                                {"tag": doc_with_score[1], "score": 100}
+                                {"tag": doc_with_score[1], "score": 0.7}
                             )
 
         except Exception as e:
