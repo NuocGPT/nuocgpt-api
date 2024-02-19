@@ -8,7 +8,7 @@ from api.models.message import Message, AuthorTypeEnum, ContentTypeEnum
 from api.schemas.auth import *
 from config.constants import ErrorMessage
 from api.services.mail import send_otp, send_otp_forgot_password
-from api.services.twilio import send_otp_sms
+from api.services.twilio import send_otp_sms, verify_otp_sms
 from api.utils.string import generateOTP
 from config.config import Settings
 
@@ -47,10 +47,8 @@ async def user_sign_in_with_phone_number(data: PhoneNumberSignInDto = Body(...))
         user = await new_user.create()
         
     if not user.verify_code or user.verify_code_expire < datetime.now():
-        # verify_code = generateOTP(6)
-        verify_code = 123456
-        await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
-        # send_otp_sms(user.phone_number, verify_code)
+        await user.update({"$set": { "verify_code": None, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMS_OTP_EXPIRES_MINUTES) }})
+        send_otp_sms(user.phone_number)
 
     return True
 
@@ -79,6 +77,23 @@ async def user_signup(data: SignUpDto = Body(...)):
 
 
 async def seeding():
+    for x in range(50):
+        user_exists = await User.find_one(User.email == 'nuocuser{0}@nuocgpt.ai'.format(x + 1))
+        if not user_exists:
+            password = hash_helper.encrypt("Nuocgpt@123")
+            new_user = User(
+                email='nuocuser{0}@nuocgpt.ai'.format(x + 1),
+                password=password,
+                roles=[RoleEnum.user],
+                is_verified=True,
+                created_at=datetime.now()
+            )
+
+            await new_user.create()
+    return {"status": True}
+
+
+async def export():
     user_messages = await Message.find(Message.created_at > datetime.today() - timedelta(days=14), Message.author.role == 'user').sort("created_at").to_list()
     workbook = xlsxwriter.Workbook('data.xlsx')
     worksheet = workbook.add_worksheet()
@@ -118,9 +133,10 @@ async def sms_verify_otp(data: SmsVerifyOTPDto = Body(...)):
     if not user:
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
 
-    if user.verify_code == data.verify_code and user.verify_code_expire >= datetime.now():
-        await user.update({"$set": { "is_verified": True }})
-        return {"access_token": sign_jwt(str(user.id)), "roles": user.roles}
+    if user.verify_code_expire >= datetime.now():
+        if verify_otp_sms(data.phone_number, data.verify_code):
+            await user.update({"$set": { "is_verified": True }})
+            return {"access_token": sign_jwt(str(user.id)), "roles": user.roles}
 
     raise HTTPException(status_code=401, detail=ErrorMessage.OTP_INCORRECT_OR_EXPIRED)
 
@@ -144,10 +160,8 @@ async def resend_sms_verify_otp(data: ReSendSMSVerifyOTPDto = Body(...)):
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
 
     if user.verify_code_expire < datetime.now():
-        # verify_code = generateOTP(6)
-        verify_code = 123456
-        await user.update({"$set": { "verify_code": verify_code, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMTP_OTP_EXPIRES_MINUTES) }})
-        # send_otp(user.email, verify_code)
+        await user.update({"$set": { "verify_code": None, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMS_OTP_EXPIRES_MINUTES) }})
+        send_otp_sms(user.phone_number)
 
     return True
 
