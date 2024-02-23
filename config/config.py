@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = "smtp_user"
     SMTP_PASS: str = "smtp_pass"
     SMTP_OTP_EXPIRES_MINUTES: int = 10
-    SMS_OTP_EXPIRES_MINUTES: int = 2
+    SMS_OTP_EXPIRES_MINUTES: int = 5
 
     # Twilio
     TWILIO_ACCOUNT_SID: str = "twilio_account_sid"

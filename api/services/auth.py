@@ -159,7 +159,7 @@ async def resend_sms_verify_otp(data: ReSendSMSVerifyOTPDto = Body(...)):
     if not user:
         raise HTTPException(status_code=401, detail=ErrorMessage.USER_NOT_FOUND)
 
-    if user.verify_code_expire < datetime.now():
+    if user.verify_code_expire - timedelta(minutes=Settings().SMS_OTP_EXPIRES_MINUTES + 1) < datetime.now():
         await user.update({"$set": { "verify_code": None, "verify_code_expire": datetime.now() + timedelta(minutes=Settings().SMS_OTP_EXPIRES_MINUTES) }})
         send_otp_sms(user.phone_number)
 
