@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     LANGCHAIN_ENDPOINT: str = "langchain_endpoint"
     LANGCHAIN_TRACING_V2: str = "is_tracing"
     LANGCHAIN_PROJECT: str = "project"
+    REDIS_URL: str = "redis"
 
     # Mail
     SMTP_HOST: str = "smtp_host"
