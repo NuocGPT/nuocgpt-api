@@ -23,7 +23,7 @@ services:
       LANGCHAIN_ENDPOINT: https://api.smith.langchain.com
       LANGCHAIN_TRACING_V2: true
       LANGCHAIN_PROJECT: nuoc-gpt
-      REDIS_URL: redis://localhost:6379
+      REDIS_URL: redis://redis:6379
     depends_on:
       - mongodb
     volumes:
@@ -37,6 +37,16 @@ services:
     volumes:
       - mongodbdata:/data/db
 
+  redis:
+    image: redis:7.2
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+
 volumes:
   mongodbdata:
+    driver: local
+  redisdata:
     driver: local
