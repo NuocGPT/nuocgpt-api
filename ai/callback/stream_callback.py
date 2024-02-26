@@ -1,8 +1,10 @@
 """Callback handlers used in the app."""
+
 from typing import Any, Dict
 
+import langchain
 from langchain.callbacks.base import AsyncCallbackHandler
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 from starlette.types import Send
 
 SOURCE_DOCUMENT_TEMPLATE = """
@@ -37,6 +39,8 @@ class AsyncRetrievalQAStreamingCallback(AsyncLLMChainStreamingCallback):
 
     async def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Run when chain ends running."""
+        if langchain.llm_cache is not None and "answer" in outputs:
+            await self.send(outputs["answer"])
         if "source_documents" in outputs:
             await self.send("\n\nSOURCE DOCUMENTS: \n")
             for document in outputs["source_documents"]:
