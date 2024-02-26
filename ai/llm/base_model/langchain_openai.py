@@ -43,6 +43,18 @@ def openai_embedding_with_backoff():
     return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
 
 
+from langchain.cache import RedisSemanticCache
+from langchain.globals import set_llm_cache
+
+set_llm_cache(
+    RedisSemanticCache(
+        redis_url=Settings().REDIS_URL,
+        embedding=openai_embedding_with_backoff(),
+        score_threshold=0.5,
+    )
+)
+
+
 class LangchainOpenAI:
     """Langchain OpenAI"""
 
