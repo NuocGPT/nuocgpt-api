@@ -19,11 +19,12 @@ services:
       SMTP_PASS: knnomsfsyqllxpag
       TWILIO_ACCOUNT_SID: AC3afbb6b9f254002e3e696202378bd77a
       TWILIO_AUTH_TOKEN: 6f67302ed6b2c8f52dc393ed31af58f6
+      TWILIO_OTP_SERVICE: VA3907d90791a0de983e7c23b5aee7ac5b
       LANGCHAIN_API_KEY: ls__47580ecef93f4f168910cf7f92ac453c
       LANGCHAIN_ENDPOINT: https://api.smith.langchain.com
       LANGCHAIN_TRACING_V2: true
       LANGCHAIN_PROJECT: nuoc-gpt
-      REDIS_URL: redis://localhost:6379
+      REDIS_URL: redis://redis:6379
     depends_on:
       - mongodb
     volumes:
@@ -37,6 +38,16 @@ services:
     volumes:
       - mongodbdata:/data/db
 
+  redis:
+    image: redis/redis-stack-server:latest
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+
 volumes:
   mongodbdata:
+    driver: local
+  redisdata:
     driver: local
