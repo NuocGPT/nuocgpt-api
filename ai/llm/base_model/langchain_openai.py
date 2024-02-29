@@ -43,16 +43,11 @@ def openai_embedding_with_backoff():
     return OpenAIEmbeddings(chunk_size=IngestDataConstants.CHUNK_OVERLAP)
 
 
-from langchain.cache import RedisSemanticCache
+from langchain.cache import RedisCache
 from langchain.globals import set_llm_cache
+from redis import Redis
 
-set_llm_cache(
-    RedisSemanticCache(
-        redis_url=Settings().REDIS_URL,
-        embedding=openai_embedding_with_backoff(),
-        score_threshold=0.5,
-    )
-)
+set_llm_cache(RedisCache(Redis()))
 
 
 class LangchainOpenAI:
@@ -66,7 +61,9 @@ class LangchainOpenAI:
         chat_history=None,
     ):
         self.output_parser = None
-        self.is_chat_model, self.llm_cls, self.llm_model = self.load_llm_model()
+        self.is_chat_model, self.llm_cls, self.llm_model, self.llm_non_cache_model = (
+            self.load_llm_model()
+        )
         self.metadata = metadata
         self.chat_history = chat_history
 
@@ -142,7 +139,8 @@ class LangchainOpenAI:
             retriever=self.vectorstore_retriever,
             combine_docs_chain=docs_chain,
             question_generator=LLMChain(
-                llm=self.llm_model, prompt=self.data_loader.prompts["condensePrompt"]
+                llm=self.llm_non_cache_model,
+                prompt=self.data_loader.prompts["condensePrompt"],
             ),
             callback_manager=callback_manager,
             max_tokens_limit=64000,
@@ -211,7 +209,7 @@ class LangchainOpenAI:
                 "The collected sensor data from various locations at various timestamps"
             )
             sensor_lib_vectorstore_retriever = SelfQueryRetriever.from_llm(
-                self.llm_model,
+                self.llm_non_cache_model,
                 sensor_lib_vectorstore,
                 document_content_description,
                 metadata_field_info,
@@ -275,8 +273,9 @@ class LangchainOpenAI:
         model_type = model_configs.pop("_type")
         llm_cls = LangChainOpenAIConstants.type_to_cls_dict_plus[model_type]
         llm_model = llm_cls(**model_configs)
+        llm_non_cache_model = llm_cls(**model_configs, cache=False)
         is_chat_model = isinstance(llm_model, ChatOpenAI)
-        return is_chat_model, llm_cls, llm_model
+        return is_chat_model, llm_cls, llm_model, llm_non_cache_model
 
     def _detect_language(self, question: str) -> str:
         try:
@@ -287,7 +286,7 @@ class LangchainOpenAI:
                 chat_history="",
             )
             detected_language = (
-                self.llm_model.generate(
+                self.llm_non_cache_model.generate(
                     [[HumanMessage(content=language_detect_prompt)]]
                 )
                 .generations[0][0]
@@ -306,7 +305,9 @@ class LangchainOpenAI:
             ).template.format(question=question, lang=self.lang)
 
             summarization = (
-                self.llm_model.generate([[HumanMessage(content=summarize_prompt)]])
+                self.llm_non_cache_model.generate(
+                    [[HumanMessage(content=summarize_prompt)]]
+                )
                 .generations[0][0]
                 .text.strip()
             )
