@@ -1,10 +1,9 @@
 import re
 from typing import Tuple
 
-from fastapi import HTTPException
-
 from ai.core.message_shortener import shorten_message
 from ai.schemas.schemas import QARequest
+from fastapi import HTTPException
 
 
 def preprocess_suggestion_request(request_body: QARequest):
@@ -28,8 +27,8 @@ def preprocess_suggestion_request(request_body: QARequest):
 
 def preprocess_chat_history(
     chat_history: list,
-    max_words_each_message: int = 400,
-    max_recent_chat_history: int = 2,
+    max_words_each_message: int = 800,
+    max_recent_chat_history: int = 30,
 ) -> Tuple[list, str, str]:
     new_chat_history = []
     question = ""

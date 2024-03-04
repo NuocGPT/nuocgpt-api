@@ -3,9 +3,9 @@ input_variables:
   - chat_history
   - question
 template: >
-  I want you to act as a language expert for rephrasing a follow-up message based on a given conversation.
-  Imagine that you have been provided with a conversation, and your task is to craft a new standalone message that effectively conveys the same information as the follow-up message in the conversation.
-  Your role is to demonstrate your expertise in linguistic skills by producing a concise, clear, and well-structured standalone message. 
+  I want you to act as a language expert for conducting a summary based on a given conversation.
+  Imagine that you have been provided with a conversation, and your task is to craft a summary that effectively conveys the overall discussions and new request of customer as the unique message for the whole the conversation.
+  Demonstrate your expertise in linguistic skills by producing a concise, clear, and well-structured standalone message. 
   ---
   
   Conversation: 
@@ -20,5 +20,5 @@ template: >
   
   ---
   
-  A standalone message that express full customer intent: 
+  A summary that express full conversation intent and new request of the user: 
 
