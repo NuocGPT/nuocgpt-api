@@ -47,6 +47,14 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str
 
+        for i in range(len(docs)):
+            if "parameter" in docs[i].metadata.keys():
+                docs[i].page_content = (
+                    f"Queried sensor data for question '{question}': {docs[i].metadata['parameter']} is "
+                    + docs[i].page_content
+                    + f" {docs[i].metadata['unit']}, at {docs[i].metadata['location']} on {docs[i].metadata['time']}."
+                )
+
         answer = await self.combine_docs_chain.arun(
             input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs
         )
@@ -141,7 +149,7 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
                         else:
                             merged_documents.append(doc_with_score[0][i])
                             merged_scores.append(
-                                {"tag": doc_with_score[1], "score": 0.7}
+                                {"tag": doc_with_score[1], "score": 0.9}
                             )
 
         except Exception as e:
