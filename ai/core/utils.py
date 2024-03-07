@@ -22,11 +22,13 @@ def preprocess_suggestion_request(request_body: QARequest):
         question,
     )
 
-    date = match.group()
-    question = question.replace(
-        date,
-        str(int(datetime.timestamp(datetime.strptime(date, "%d/%m/%Y")))),
-    )
+    if match:
+        date = match.group()
+
+        question = question.replace(
+            date,
+            str(int(datetime.timestamp(datetime.strptime(date, "%d/%m/%Y")))),
+        )
 
     return {
         "question": question,
