@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Tuple
 
 import pytz
@@ -19,21 +19,30 @@ def preprocess_suggestion_request(request_body: QARequest):
         raise HTTPException(status_code=400, detail="message is missing")
 
     match = re.search(
-        "([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])(\.|-|/)([1-9]|0[1-9]|1[0-2])(\.|-|/)([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])$|^([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])(\.|-|/)([1-9]|0[1-9]|1[0-2])(\.|-|/)([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])",
+        "( *)([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])(\.|-|\/)([1-9]|0[1-9]|1[0-2])(\.|-|\/)(19[0-9][0-9]|20[0-9][0-9])( *)",
         question,
     )
 
     if match:
-        date = match.group()
+        date = match.group().strip().split("/")
 
-        VN_TZ = pytz.timezone("Asia/Ho_Chi_Minh")
+        # Define the date
+        year = int(date[2])
+        month = int(date[1])
+        day = int(date[0])
 
-        formatted_date = datetime.strptime(date, "%d/%m/%Y")
-        date_time_vntz = formatted_date.astimezone(VN_TZ)
+        # Define the GMT+7 timezone offset in hours
+        timezone_offset_hours = 7
+
+        dt = datetime(year, month, day, 0, 0, 0)
+
+        dt_with_offset = dt - timedelta(hours=timezone_offset_hours)
+
+        unix_timestamp = int(dt_with_offset.timestamp())
 
         question = question.replace(
             date,
-            str(int(datetime.timestamp(date_time_vntz))),
+            str(int(unix_timestamp)),
         )
 
     return {
