@@ -186,12 +186,12 @@ class LangchainOpenAI:
             metadata_field_info = [
                 AttributeInfo(
                     name="time",
-                    description="The timestamp that we want to get value of",
+                    description="The timestamp that we want to get value of. Always convert string to integer.",
                     type="integer",
                 ),
                 AttributeInfo(
                     name="parameter",
-                    description="The measurement metric that we want to get value",
+                    description="The measurement parameter that we want to get value, which can include: 'Bentho AAbundance', 'Conductivity', 'Diatoms AAbundance', 'Water Temperature', 'Dissolved Oxygen', 'pH', 'Fish Count', 'Littoral AAbundance', 'Rainfall', 'Water Level', 'Zooplanktons AAbundance'",
                     type="string",
                 ),
                 AttributeInfo(
@@ -218,8 +218,8 @@ class LangchainOpenAI:
 
             final_vectorstore_retriever = MergerRetriever(
                 retrievers=[
-                    diamond_vectorestore_retriever,
                     sensor_lib_vectorstore_retriever,
+                    diamond_vectorestore_retriever,
                     vectorestore_retriever,
                 ],
             )

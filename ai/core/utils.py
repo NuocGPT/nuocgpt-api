@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Tuple
 
 from ai.core.message_shortener import shorten_message
@@ -15,6 +16,17 @@ def preprocess_suggestion_request(request_body: QARequest):
         chat_history, question, previous_response = preprocess_chat_history(messages)
     else:
         raise HTTPException(status_code=400, detail="message is missing")
+
+    match = re.search(
+        "([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])(\.|-|/)([1-9]|0[1-9]|1[0-2])(\.|-|/)([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])$|^([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])(\.|-|/)([1-9]|0[1-9]|1[0-2])(\.|-|/)([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])",
+        question,
+    )
+
+    date = match.group()
+    question = question.replace(
+        date,
+        str(int(datetime.timestamp(datetime.strptime(date, "%d/%m/%Y")))),
+    )
 
     return {
         "question": question,
