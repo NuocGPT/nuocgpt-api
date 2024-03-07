@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from typing import Tuple
 
+import pytz
 from ai.core.message_shortener import shorten_message
 from ai.schemas.schemas import QARequest
 from fastapi import HTTPException
@@ -25,9 +26,14 @@ def preprocess_suggestion_request(request_body: QARequest):
     if match:
         date = match.group()
 
+        VN_TZ = pytz.timezone("Asia/Ho_Chi_Minh")
+
+        formatted_date = datetime.strptime(date, "%d/%m/%Y")
+        date_time_vntz = formatted_date.astimezone(VN_TZ)
+
         question = question.replace(
             date,
-            str(int(datetime.timestamp(datetime.strptime(date, "%d/%m/%Y")))),
+            str(int(datetime.timestamp(date_time_vntz))),
         )
 
     return {
