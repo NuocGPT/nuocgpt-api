@@ -24,12 +24,14 @@ def preprocess_suggestion_request(request_body: QARequest):
     )
 
     if match:
-        date = match.group().strip().split("/")
+        date = match.group().strip()
+
+        date_split = date.split("/")
 
         # Define the date
-        year = int(date[2])
-        month = int(date[1])
-        day = int(date[0])
+        year = int(date_split[2])
+        month = int(date_split[1])
+        day = int(date_split[0])
 
         # Define the GMT+7 timezone offset in hours
         timezone_offset_hours = 7
