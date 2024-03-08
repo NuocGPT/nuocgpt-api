@@ -186,22 +186,22 @@ class LangchainOpenAI:
             metadata_field_info = [
                 AttributeInfo(
                     name="time",
-                    description="The timestamp that we want to get value of. Always convert string to integer.",
+                    description="The timestamp that we want to get value of. NEVER use string. ALWAYS convert to INTEGER.",
                     type="integer",
                 ),
                 AttributeInfo(
                     name="parameter",
-                    description="The measurement parameter that we want to get value, which can include: 'Bentho AAbundance', 'Conductivity', 'Diatoms AAbundance', 'Water Temperature', 'Dissolved Oxygen', 'pH', 'Fish Count', 'Littoral AAbundance', 'Rainfall', 'Water Level', 'Zooplanktons AAbundance'",
+                    description="The measurement parameter that we want to get value, which can include: ['Bentho AAbundance', 'Conductivity', 'Diatoms AAbundance', 'Water Temperature', 'Dissolved Oxygen', 'pH', 'Fish Count', 'Littoral AAbundance', 'Rainfall', 'Water Level', 'Zooplanktons AAbundance']. If the request is in Vietnamese, ALWAYS detect and translate the parameter to English using one of these categories.",
                     type="string",
                 ),
                 AttributeInfo(
                     name="unit",
-                    description="The measurement unit of desired value",
+                    description="The measurement unit of desired value.",
                     type="string",
                 ),
                 AttributeInfo(
                     name="location",
-                    description="The location name where we want to get data of",
+                    description="The location name in Vietnam where we want to get data of. ALWAYS use the original Vietnamese form.",
                     type="string",
                 ),
             ]
