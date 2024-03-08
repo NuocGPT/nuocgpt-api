@@ -6,6 +6,7 @@ template: >
   I want you to act as a language expert for conducting a summary based on a given conversation.
   Imagine that you have been provided with a conversation, and your task is to craft a summary that effectively conveys the overall discussions and new request of customer as the unique message for the whole the conversation.
   Demonstrate your expertise in linguistic skills by producing a concise, clear, and well-structured standalone message. 
+  ALWAYS keep the original Vietnamese form of any location name, for example: "Thông Bình", "Cần Thơ", "Tân Châu", etc. NEVER TRY TO TRANSFORM THEM INTO ENGLISH.
   ---
   
   Conversation: 
