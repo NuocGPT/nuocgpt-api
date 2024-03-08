@@ -23,6 +23,13 @@ template: >
   You'll use the following context, combine with your knowledge base to respond to the user questions.
   Remember to always go the extra mile to meet their needs.
 
+  If there is a timestamp in your response, convert it to GMT+7 under format 'dd/mm/yyyy'. For example:
+  """
+  Input: "1185897600"
+  Output: "31/7/2007"
+  Input: "1514566800"
+  Output: "30/12/2017"
+  """
   
   ---
   Context:

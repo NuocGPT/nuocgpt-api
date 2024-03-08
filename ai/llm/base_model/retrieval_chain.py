@@ -134,23 +134,37 @@ class CustomConversationalRetrievalChain(ConversationalRetrievalChain):
             merged_documents = []
             merged_scores = []
 
+            sensor_documents = []
+            sensor_scores = []
+
+            normal_documents = []
+            normal_scores = []
+
             max_docs = max(len(docs[0]) for docs in retriever_docs)
             for i in range(max_docs):
                 for _, doc_with_score in zip(self.retriever.retrievers, retriever_docs):
                     if i < len(doc_with_score[0]):
                         if isinstance(doc_with_score[0][i], tuple):
-                            merged_documents.append(doc_with_score[0][i][0])
-                            merged_scores.append(
+                            normal_documents.append(doc_with_score[0][i][0])
+                            normal_scores.append(
                                 {
                                     "tag": doc_with_score[1],
                                     "score": doc_with_score[0][i][1],
                                 }
                             )
                         else:
-                            merged_documents.append(doc_with_score[0][i])
-                            merged_scores.append(
+                            sensor_documents.append(doc_with_score[0][i])
+                            sensor_scores.append(
                                 {"tag": doc_with_score[1], "score": 0.9}
                             )
+
+            for i in range(len(sensor_documents)):
+                merged_documents.append(sensor_documents[i])
+                merged_scores.append(sensor_scores[i])
+
+            for i in range(len(normal_documents)):
+                merged_documents.append(normal_documents[i])
+                merged_scores.append(normal_documents[i])
 
         except Exception as e:
             run_manager.on_retriever_error(e)
