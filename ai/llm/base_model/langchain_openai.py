@@ -191,7 +191,7 @@ class LangchainOpenAI:
                 ),
                 AttributeInfo(
                     name="parameter",
-                    description="The measurement parameter that we want to get value, which can include: ['Bentho AAbundance', 'Conductivity', 'Diatoms AAbundance', 'Water Temperature', 'Dissolved Oxygen', 'pH', 'Fish Count', 'Littoral AAbundance', 'Rainfall', 'Water Level', 'Zooplanktons AAbundance']. If the request is in Vietnamese, ALWAYS detect and translate the parameter to English using one of these categories.",
+                    description="The measurement parameter that we want to get value, which can include: ['Bentho AAbundance', 'Conductivity', 'Diatoms AAbundance', 'Water Temperature', 'Dissolved Oxygen', 'pH', 'Fish Count', 'Littoral AAbundance', 'Rainfall', 'Water Level', 'Zooplanktons AAbundance', 'Salinity', 'Alkalinity', 'Nh4/nh3', 'White Spot Disease Virus']. If the request is in Vietnamese, ALWAYS detect and translate the parameter to English using one of these categories.",
                     type="string",
                 ),
                 AttributeInfo(
