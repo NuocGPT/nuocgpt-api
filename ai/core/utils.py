@@ -42,6 +42,7 @@ def preprocess_suggestion_request(request_body: QARequest):
 
         unix_timestamp = int(dt_with_offset.timestamp())
 
+        # unix_timestamp = datetime.timestamp(datetime.strptime(date, "%d/%m/%Y"))
         question = question.replace(
             date,
             str(int(unix_timestamp)),
@@ -58,8 +59,8 @@ def preprocess_suggestion_request(request_body: QARequest):
 
 def preprocess_chat_history(
     chat_history: list,
-    max_words_each_message: int = 800,
-    max_recent_chat_history: int = 30,
+    max_words_each_message: int = 500,
+    max_recent_chat_history: int = 10,
 ) -> Tuple[list, str, str]:
     new_chat_history = []
     question = ""

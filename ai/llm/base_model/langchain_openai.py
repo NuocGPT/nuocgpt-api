@@ -143,7 +143,7 @@ class LangchainOpenAI:
                 prompt=self.data_loader.prompts["condensePrompt"],
             ),
             callback_manager=callback_manager,
-            max_tokens_limit=64000,
+            max_tokens_limit=24000,
             output_parser=self.output_parser,
             return_generated_question=True,
         )
@@ -152,7 +152,7 @@ class LangchainOpenAI:
         self, vectorstore_folder_path: str, vectorstore_search_kwargs: dict = None
     ) -> Tuple[VectorStore, MergerRetriever]:
         if vectorstore_search_kwargs is None:
-            vectorstore_search_kwargs = {"k": 15, "score_threshold": 0.3}
+            vectorstore_search_kwargs = {"k": 5, "score_threshold": 0.3}
 
         try:
             embeddings = openai_embedding_with_backoff()
