@@ -27,7 +27,7 @@ async def add_feedback(user_id: UUID, data: AddFeedbackDto) -> Feedback:
         rating=data.rating,
         tags=data.tags,
         text=data.text,
-        user=FeedbackUser(id=user.id, email=user.email),
+        user=FeedbackUser(id=user.id, email=user.email, phone_number=user.phone_number),
         created_at=datetime.now()
     )
     feedback = await new_feedback.create()
