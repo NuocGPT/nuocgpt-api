@@ -8,8 +8,8 @@ class AddFeedbackDto(BaseModel):
     question: FeedbackQuestion
     message: FeedbackMessage
     rating: RatingEnum
-    tags: Optional[List[TagEnum]]
-    text: Optional[str]
+    tags: Optional[List[TagEnum]]  = None
+    text: Optional[str] = None
 
     class Config:
         json_schema_extra = {

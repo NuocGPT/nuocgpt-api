@@ -33,7 +33,8 @@ class FeedbackMessage(BaseModel):
 
 class FeedbackUser(BaseModel):
     id: Optional[UUID] = None
-    email: EmailStr
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
 
 
 class Feedback(Document):
