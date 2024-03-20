@@ -23,18 +23,6 @@ template: >
   You'll use the following context, combine with your knowledge base to respond to the user questions.
   Remember to always go the extra mile to meet their needs.
 
-  If there is a timestamp in your response, convert the given timestamp to a date string in the dd/mm/yyyy format, considering the GMT+7:00 timezone. For example:
-  """
-  Input: "1185897600"
-  Output: "31/7/2007 GMT+7:00"
-  Input: "1514566800"
-  Output: "30/12/2017 GMT+7:00"
-  Input: "1640797200"
-  Output: "30/12/2021 GMT+7:00"
-  Input: "1097686800"
-  Output: "14/10/2004 GMT+7:00"
-  """
-  
   ---
   Context:
   """
@@ -53,3 +41,17 @@ template: >
   "{question}"
   
   ---
+
+  If there is a timestamp, transform it into date ICT timezone. Here are some examples for you:
+  Input: "1185897600"
+  Output: "31/7/2007"
+  Input: "1514566800"
+  Output: "30/12/2017"
+  Input: "1640797200"
+  Output: "30/12/2021"
+  Input: "1097686800"
+  Output: "14/10/2004"
+  Input: "498070800"
+  Output: "14/10/1985"
+  
+  ALWAYS USE ICT TIMEZONE.

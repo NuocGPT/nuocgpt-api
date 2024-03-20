@@ -47,7 +47,7 @@ from langchain.cache import RedisCache
 from langchain.globals import set_llm_cache
 from redis import Redis
 
-set_llm_cache(RedisCache(Redis()))
+set_llm_cache(RedisCache(Redis.from_url(Settings().REDIS_URL)))
 
 
 class LangchainOpenAI:
