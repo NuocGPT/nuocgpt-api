@@ -9,7 +9,7 @@ The application is built with FastAPI and MongoDB.
 + Authentication
 + Deployment
 
-## Using the applicaiton
+## Using the application
 
 To use the application, follow the outlined steps:
 
@@ -24,7 +24,7 @@ $ python3 -m venv venv
 ```console
 (venv)$ pip install -r requirements.txt
 ```
-3. You also need to start your mongodb instance either locally or on Docker as well as create a `.env` file. See the `.env.sample` for configurations. 
+3. You also need to start your Mongodb instance either locally or on Docker as well as create a `.env` file. See the `.env.sample` for configurations. 
 
     Example for running locally MongoDB at port 27017:
     ```console
@@ -42,4 +42,4 @@ The starter listens on port 8000 on address [0.0.0.0](0.0.0.0:8080).
 
 ## License
 
-This project is licensed under the terms of MIT license.
+This project is licensed under the terms of the MIT license.
